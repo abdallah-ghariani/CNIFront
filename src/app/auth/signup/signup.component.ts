@@ -1,0 +1,36 @@
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-signup',
+  imports: [],
+  template: `
+    
+<div class="surface-card p-4 shadow-2 border-round w-full lg:w-6">
+    <div class="text-center mb-5">
+        <img src="assets/images/CNI.jpg" alt="Image" height="50" class="mb-3">
+    </div>
+
+    <div>
+        <label for="email1" class="block text-900 font-medium mb-2">Email</label>
+        <input id="email1" type="text" placeholder="Email address" pInputText class="w-full mb-3">
+
+        <label for="password1" class="block text-900 font-medium mb-2">Password</label>
+        <input id="password1" type="password" placeholder="Password" pInputText class="w-full mb-3">
+
+        <div class="flex align-items-center justify-content-between mb-6">
+            <div class="flex align-items-center">
+              
+                <label for="rememberme1" class="text-900">Remember me</label>
+            </div>
+            <a class="font-medium no-underline ml-2 text-blue-500 text-right cursor-pointer">Forgot password?</a>
+        </div>
+
+        <button pButton pRipple label="Sign In" icon="pi pi-user" class="w-full"></button>
+    </div>
+</div>
+  `,
+  styles: ``
+})
+export class SignupComponent {
+
+}
