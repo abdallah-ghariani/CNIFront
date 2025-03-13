@@ -54,8 +54,7 @@
               }
             ],
             "styles": [
-              "src/styles.css",
-              "node_modules/primeflex/primeflex.css"
+              "src/styles.css"
             ],
             "scripts": []
           },

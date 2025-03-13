@@ -1,36 +1,97 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from "@angular/core";
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from "@angular/forms";
+import { Router, RouterLink } from "@angular/router";
+import { CheckboxModule } from "primeng/checkbox";
+import { InputTextModule } from "primeng/inputtext";
+import { ButtonModule } from "primeng/button";
+import { AuthService } from "../../services/auth.service";
+import { catchError, of } from "rxjs";
+import { CommonModule } from "@angular/common";
 
 @Component({
-  selector: 'app-signup',
-  imports: [],
+  selector: "app-signup",
+  imports: [
+    CheckboxModule,
+    ButtonModule,
+    InputTextModule,
+    ReactiveFormsModule,
+    RouterLink,
+    CommonModule,
+  ],
   template: `
-    
-<div class="surface-card p-4 shadow-2 border-round w-full lg:w-6">
-    <div class="text-center mb-5">
-        <img src="assets/images/CNI.jpg" alt="Image" height="50" class="mb-3">
+    <div class="flex items-center justify-center h-screen bg-gradient-to-r from-gray-100 to-blue-200">
+      <div class="bg-white p-6 rounded-xl shadow-lg w-96 text-center">
+        <img src="images/CNI.jpg" alt="Image" class="w-20 mx-auto mb-4" />
+        <h2 class="text-2xl font-semibold">Create an Account</h2>
+        <p class="text-gray-600">Already have an account? <a [routerLink]="['/login']" class="text-blue-500">Log in</a></p>
+
+        <form [formGroup]="signupForm" (ngSubmit)="signup()" class="mt-4 space-y-4">
+          <div>
+            <label for="username" class="block text-left font-medium text-gray-700">Username</label>
+            <input pInputText id="username" formControlName="username" 
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300" />
+          </div>
+          
+          <div>
+            <label for="email" class="block text-left font-medium text-gray-700">Email</label>
+            <input pInputText id="email" formControlName="email" type="email"
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300" />
+          </div>
+          
+          <div>
+            <label for="password" class="block text-left font-medium text-gray-700">Password</label>
+            <input pInputText id="password" type="password" formControlName="password" 
+              class="w-full p-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-300" />
+          </div>
+          
+          <div class="text-red-500 text-sm" *ngIf="message">{{ message |titlecase }}</div>
+          
+          
+          <button pButton type="submit" label="Sign Up" icon="pi pi-user" [disabled]="!signupForm.valid"
+            class="w-full bg-blue-500 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400">
+          </button>
+        </form>
+      </div>
     </div>
-
-    <div>
-        <label for="email1" class="block text-900 font-medium mb-2">Email</label>
-        <input id="email1" type="text" placeholder="Email address" pInputText class="w-full mb-3">
-
-        <label for="password1" class="block text-900 font-medium mb-2">Password</label>
-        <input id="password1" type="password" placeholder="Password" pInputText class="w-full mb-3">
-
-        <div class="flex align-items-center justify-content-between mb-6">
-            <div class="flex align-items-center">
-              
-                <label for="rememberme1" class="text-900">Remember me</label>
-            </div>
-            <a class="font-medium no-underline ml-2 text-blue-500 text-right cursor-pointer">Forgot password?</a>
-        </div>
-
-        <button pButton pRipple label="Sign In" icon="pi pi-user" class="w-full"></button>
-    </div>
-</div>
   `,
-  styles: ``
+  styles: []
 })
-export class SignupComponent {
+export class SignupComponent implements OnInit {
+  signupForm!: FormGroup;
+  message = '';
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
+  ngOnInit() {
+    this.signupForm = this.formBuilder.group({
+      username: ["", Validators.required],
+      email: ["", [Validators.required, Validators.email]],
+      password: ["", Validators.required],
+    });
+  }
+
+  signup() {
+    this.authService
+      .signup(this.signupForm.value)
+      .pipe(
+        catchError(err => {
+          const { detail } = err.error;
+          this.message=detail;
+          return of({ detail});
+          
+        })
+      )
+      .subscribe((response) => {
+        console.log(response);
+       
+      });
+  }
 }
