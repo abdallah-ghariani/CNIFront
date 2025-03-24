@@ -1,6 +1,7 @@
 import {
   ApplicationConfig,
   importProvidersFrom,
+  inject,
   provideZoneChangeDetection,
 } from "@angular/core";
 import { provideRouter } from "@angular/router";
@@ -14,6 +15,8 @@ import {
 } from "@angular/common/http";
 import { routes } from "./app.routes";
 import { JwtModule } from "@auth0/angular-jwt";
+import { AuthService } from "./services/auth.service";
+import { firstValueFrom } from "rxjs";
 
 const MyPreset = definePreset(Aura, {
   semantic: {
@@ -70,7 +73,8 @@ const MyPreset = definePreset(Aura, {
 });
 
 export function tokenGetter() {
-  return localStorage.getItem("access_token");
+  const authService = inject(AuthService);
+  return firstValueFrom(authService.getToken());
 }
 
 export const appConfig: ApplicationConfig = {
@@ -81,6 +85,9 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       theme: {
         preset: MyPreset,
+        options:{
+          darkModeSelector: false || 'none'
+        }
       },
     }),
     importProvidersFrom(
@@ -88,7 +95,7 @@ export const appConfig: ApplicationConfig = {
         config: {
           tokenGetter: tokenGetter,
           allowedDomains: ["localhost:8080"],
-          disallowedRoutes: ["http://localhost:8080/api/auth/"],
+          disallowedRoutes: [/http:\/\/localhost:8080\/api\/auth\/.*/],
           skipWhenExpired: true,
         },
       })

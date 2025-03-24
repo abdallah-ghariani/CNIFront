@@ -10,7 +10,7 @@ import { CheckboxModule } from "primeng/checkbox";
 import { InputTextModule } from "primeng/inputtext";
 import { ButtonModule } from "primeng/button";
 import { AuthService } from "../../services/auth.service";
-import { catchError, of } from "rxjs";
+import { catchError, of, tap } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { CommonModule } from "@angular/common";
 
@@ -72,6 +72,7 @@ export class LoginComponent implements OnInit {
   }
 
   login() {
+
     this.authService
       .login(this.loginForm.value)
       .pipe(
@@ -81,9 +82,8 @@ export class LoginComponent implements OnInit {
         })
       )
       .subscribe((response) => {
-        console.log(response);
         if ('token' in response) {
-          this.router.navigateByUrl('/test');
+          this.router.navigateByUrl('/');
         } else {
           this.message = response.description;
         }
