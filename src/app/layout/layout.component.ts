@@ -7,28 +7,28 @@ import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-layout',
+  standalone: true,
   imports: [RouterOutlet, RouterLink, CommonModule, MenuModule],
   template: `
 <div class="flex h-screen">
   <!-- Sidebar -->
   <div 
     [ngClass]="{'w-64': sidebarOpen, 'w-16': !sidebarOpen}"
-    class="bg-gray-800 text-white flex flex-col transition-all duration-300"
+    class="bg-custom-blue text-white flex flex-col transition-all duration-300"
   >
     <div class="p-4 flex items-center justify-between">
-      <span class="text-lg font-bold" *ngIf="sidebarOpen">My App</span>
-      <button (click)="sidebarOpen = !sidebarOpen">
+      <span class="text-lg font-bold" *ngIf="sidebarOpen">CNI</span>
+      <button (click)="toggleSidebar()">
         <i class="pi pi-bars text-xl"></i>
       </button>
     </div>
     <nav class="flex-1 px-2 space-y-2">
-      <a routerLink="" class="flex items-center p-2 hover:bg-gray-700 rounded-md">
-        <i class="pi pi-home mr-3"></i>
-        <span *ngIf="sidebarOpen">Dashboard</span>
-      </a>
-      <a routerLink="users" class="flex items-center p-2 hover:bg-gray-700 rounded-md">
-        <i class="pi pi-cog mr-3"></i>
-        <span *ngIf="sidebarOpen">Settings</span>
+      <a *ngFor="let item of sidebarItems"
+         [routerLink]="item.link"
+         class="flex items-center p-2 hover:bg-blue-700 rounded-md"
+      >
+        <i [class]="item.icon + ' mr-3'"></i>
+        <span *ngIf="sidebarOpen">{{ item.label }}</span>
       </a>
     </nav>
   </div>
@@ -36,35 +36,65 @@ import { AuthService } from '../services/auth.service';
   <!-- Main Content -->
   <div class="flex-1 flex flex-col">
     <!-- Top Navbar -->
-    <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
-      <span class="text-lg font-semibold">Dashboard</span>
+    <div class="bg-light-gray text-black p-4 flex justify-between items-center">
+      <span class="text-lg font-semibold">{{ pageTitle }}</span>
       <div>
-      <p-menu #menu [model]="menuItems" [popup]="true"></p-menu>
-      <button 
-        (click)="menu.toggle($event)" 
-        class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700"
-      >
-        <i class="pi pi-user"></i>
-      </button>
+        <p-menu #menu [model]="menuItems" [popup]="true"></p-menu>
+        <button 
+          (click)="menu.toggle($event)" 
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-button-color hover:bg-blue-700"
+        >
+          <i class="pi pi-user"></i>
+        </button>
       </div>
     </div>
 
     <!-- Content Area -->
-    <div class="p-4 flex-1 bg-gray-100">
+    <div class="p-4 flex-1 bg-gray-200">
       <router-outlet></router-outlet>
     </div>
   </div>
 </div>
-
   `,
-  styles: ``
+  styles: [`
+    .bg-custom-blue {
+      background-color: #007bff; /* Sidebar color */
+    }
+    .bg-light-gray {
+      background-color: #f8f9fa; /* Light grey color for the top navbar */
+    }
+    .bg-button-color {
+      background-color: #3b86d1; /* Button color */
+    }
+    .sidebar-transition {
+      transition: width 0.3s ease-in-out;
+    }
+  `]
 })
 export class LayoutComponent {
-  constructor(private authService: AuthService, private router: Router){}
-sidebarOpen = false;
-menuItems: MenuItem[]= [
-  { label: 'Profile', icon: 'pi pi-user', command: () => console.log("go to user profile") },
-  { separator: true },
-  { label: 'Logout', icon: 'pi pi-sign-out', command: () => this.authService.logout().subscribe(_=> this.router.navigateByUrl('login')) }
-];
+  sidebarOpen = false;
+  pageTitle = 'Admin';
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  sidebarItems: { label: string; link: string; icon: string }[] = [
+    { label: 'Dashboard', link: '', icon: 'pi pi-home' },
+    { label: 'Users', link: 'users', icon: 'pi pi-users' },
+    { label: 'Secteurs', link: 'secteurs', icon: 'pi pi-list' },
+    { label: 'Structures', link: 'structures', icon: 'pi pi-sitemap' },
+  ];
+
+  menuItems: MenuItem[] = [
+    { label: 'Profile', icon: 'pi pi-user', command: () => console.log("go to user profile") },
+    { separator: true },
+    { label: 'Logout', icon: 'pi pi-sign-out', command: () => this.logout() }
+  ];
+
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  logout() {
+    this.authService.logout().subscribe(() => this.router.navigateByUrl('login'));
+  }
 }

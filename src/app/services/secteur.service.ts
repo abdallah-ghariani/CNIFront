@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { environment } from "../../environments/environment";
+import { Secteur } from "../models/secteur";
 import { Page } from "../models/page";
 
 const apiUrl = environment.BACKEND_URL + "secteurs";
