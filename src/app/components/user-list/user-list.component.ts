@@ -1,229 +1,38 @@
-import { Component, signal } from "@angular/core";
-import { UserService } from "../../services/user.service";
-import { User } from "../../models/user";
-import { ConfirmationService, FilterMetadata } from "primeng/api";
-import { TableLazyLoadEvent, TableModule } from "primeng/table";
-import { DialogModule } from "primeng/dialog";
-import { ButtonModule } from "primeng/button";
-import { FormsModule } from "@angular/forms";
-import { InputTextModule } from "primeng/inputtext";
-import { ConfirmDialogModule } from "primeng/confirmdialog";
-import { Role, Roles } from "../../models/roles";
-import { SelectModule } from "primeng/select";
+// user-list.component.ts
+import { Component, OnInit, signal } from '@angular/core';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user'; // Import your User model
+import { Role, Roles } from '../../models/roles'; 
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';  // For p-table
+import { DialogModule } from 'primeng/dialog';  // For p-dialog
+import { InputTextModule } from 'primeng/inputtext';  // For pInputText
+import { ButtonModule } from 'primeng/button';  // For pButton
+import { DropdownModule } from 'primeng/dropdown';  // For p-select
+import { ToastModule } from 'primeng/toast';  // For toast notifications (optional)
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';  // For ngModel
+import { HttpClientModule } from '@angular/common/http';  // For HttpClient
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';  // For PrimeNG animations
+import { ConfirmDialogModule } from 'primeng/confirmdialog';  // Import this module
+import { ConfirmationService, FilterMetadata } from 'primeng/api';
 @Component({
-  selector: "app-user-list",
+  selector: 'app-user-list',
+  templateUrl: './user-list.component.html',
+  styleUrls: ['./user-list.component.css'],
   imports: [
-    TableModule,
-    DialogModule,
-    ButtonModule,
-    FormsModule,
-    InputTextModule,
-    ConfirmDialogModule,
-    SelectModule,
+    BrowserModule,
+    FormsModule,  // Add FormsModule to use ngModel
+    HttpClientModule,
+    BrowserAnimationsModule,
+    TableModule,  // Add PrimeNG Table module
+    DialogModule,  // Add PrimeNG Dialog module
+    InputTextModule,  // Add PrimeNG InputText module
+    ButtonModule,  // Add PrimeNG Button module
+    DropdownModule,  // Add PrimeNG Dropdown module
+    ToastModule, 
+    ConfirmDialogModule
   ],
-  template: `
-    <div class="p-4">
-      <p-confirmdialog />
-      <button
-        pButton
-        label="Add User"
-        class="p-button-primary mb-2"
-        (click)="openAddDialog()"
-      ></button>
-      <div>
-        <p-table
-          [value]="users()"
-          [paginator]="true"
-          [rows]="5"
-          [loading]="loading"
-          [totalRecords]="total"
-          (onLazyLoad)="loadUsers($event)"
-          [lazy]="true"
-          [rowsPerPageOptions]="[5, 10, 20]"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Action</th>
-            </tr>
-            <tr>
-              <th></th>
-              <th>
-                <p-columnFilter
-                  type="text"
-                  field="username"
-                  placeholder="Search by username"
-                  ariaLabel="Filter Name"
-                  [showMenu]="false"
-                ></p-columnFilter>
-              </th>
-              <th>
-                <p-columnFilter
-                  field="role"
-                  matchMode="equals"
-                  [showMenu]="false"
-                >
-                  <ng-template #filter let-value let-filter="filterCallback">
-                    <p-select
-                      [ngModel]="value"
-                      [options]="roles"
-                      (onChange)="filter($event.value)"
-                      placeholder="Select a Role"
-                      [showClear]="true"
-                      class="w-64"
-                    >
-                    </p-select>
-                  </ng-template>
-                </p-columnFilter>
-              </th>
-              <th></th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-user let-i="rowIndex">
-            <tr>
-              <td>{{ i + 1 }}</td>
-              <td>{{ user.username }}</td>
-              <td>{{ user.role }}</td>
-              <td>
-                <button
-                  pButton
-                  label="Edit"
-                  class="p-button-rounded p-button-info mr-2"
-                  (click)="openEditDialog(user)"
-                ></button>
-                <button
-                  pButton
-                  label="Delete"
-                  class="p-button-rounded p-button-danger"
-                  (click)="deleteUser(user.id)"
-                ></button>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </div>
-
-    <!-- Edit User Dialog -->
-    @if (selectedUser) {
-    <p-dialog
-      header="Edit User"
-      [(visible)]="displayEditDialog"
-      [modal]="true"
-      [closable]="false"
-      [style]="{ width: '30rem', height: '30rem' }"
-    >
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Username</label>
-        <input
-          type="text"
-          pInputText
-          [(ngModel)]="selectedUser.username"
-          class="w-full p-2 border rounded"
-        />
-      </div>
-
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Role</label>
-        <p-select
-          [options]="roles"
-          [(ngModel)]="selectedUser.role"
-          placeholder="Select a Role"
-          class="w-full p-2 border rounded"
-        />
-      </div>
-      @if (errorMessage) {
-      <div class="text-red-500 text-sm mb-3">
-        {{ errorMessage }}
-      </div>
-      }
-      <ng-template pTemplate="footer">
-        <button
-          pButton
-          label="Save"
-          icon="pi pi-check"
-          (click)="saveUser()"
-        ></button>
-        <button
-          pButton
-          label="Cancel"
-          icon="pi pi-times"
-          class="p-button-secondary"
-          (click)="displayEditDialog = false"
-        ></button>
-      </ng-template>
-    </p-dialog>
-    }
-    <!-- add user dialog -->
-    @if(newUser){
-    <p-dialog
-      [(visible)]="displayAddDialog"
-      header="Add User"
-      [modal]="true"
-      [closable]="false"
-      [style]="{ width: '30rem', height: '35rem' }"
-    >
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Username</label>
-        <input
-          type="text"
-          pInputText
-          [(ngModel)]="newUser.username"
-          class="w-full p-2 border rounded"
-        />
-      </div>
-
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Password</label>
-        <input
-          type="password"
-          pInputText
-          [(ngModel)]="newUser.password"
-          class="w-full p-2 border rounded"
-        />
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">Role</label>
-        <p-select
-          [options]="roles"
-          [(ngModel)]="newUser.role"
-          placeholder="Select a Role"
-          class="w-full p-2 border rounded"
-        />
-      </div>
-      @if (errorMessage) {
-      <div class="text-red-500 text-sm mb-3">
-        {{ errorMessage }}
-      </div>
-      }
-
-      <ng-template pTemplate="footer">
-        <button
-          type="button"
-          pButton
-          label="Cancel"
-          class="p-button-secondary"
-          (click)="displayAddDialog = false"
-        ></button>
-        <button
-          pButton
-          label="Add"
-          class="p-button-primary"
-          (click)="addUser()"
-          [disabled]="!(newUser.username && newUser.password && newUser.role)"
-        ></button>
-      </ng-template>
-    </p-dialog>
-    }
-  `,
-  styles: [`
-  ::ng-deep .p-datatable-table-container{
-    min-height : 300px;
-  }
-  `],
-  providers: [ConfirmationService],
 })
 export class UserListComponent {
   users = signal<User[]>([]);

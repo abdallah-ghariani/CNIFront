@@ -3,7 +3,7 @@ import { Injectable, signal } from "@angular/core";
 import { Login } from "../models/login";
 import { AuthResponse } from "../models/auth-response";
 import { environment } from "../../environments/environment";
-//import { Signup } from '../models/signup';
+import { Signup } from '../models/signup';
 import { catchError, map, of, shareReplay, tap } from "rxjs";
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { Router } from "@angular/router";
@@ -38,9 +38,9 @@ export class AuthService {
       .pipe(tap((_) => (this.accessToken = null)));
   }
 
-  /*signup(signup: Signup){
+  signup(signup: Signup){
     return this.http.post<AuthResponse>(BACKEND_URL+'register',signup);
-  }*/
+  }
 
   getLoggedInUser() {
     if (this.accessToken) {
