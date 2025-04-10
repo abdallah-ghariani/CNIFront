@@ -6,6 +6,7 @@
       class="p-button-primary mb-2"
       (click)="openAddDialog()"
     ></button>
+<<<<<<< HEAD
     <div>
       <p-table
         [value]="structures()"
@@ -49,12 +50,60 @@
   </div>
 
   <!-- Edit Structure Dialog -->
+=======
+  
+    <p-table
+      [value]="structures()"
+      [paginator]="true"
+      [rows]="5"
+      [loading]="loading"
+      [totalRecords]="total"
+      (onLazyLoad)="loadStructures($event)"
+      [lazy]="true"
+      [rowsPerPageOptions]="[5, 10, 20]"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Action</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-structure let-i="rowIndex">
+        <tr>
+          <td>{{ i + 1 }}</td>
+          <td>{{ structure.name }}</td>
+          <td>
+            <button
+              pButton
+              label="Edit"
+              class="p-button-rounded p-button-info mr-2"
+              (click)="openEditDialog(structure)"
+            ></button>
+            <button
+              pButton
+              label="Delete"
+              class="p-button-rounded p-button-danger"
+              (click)="deleteStructure(structure.id)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  
+  <!-- Edit Dialog -->
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
   <p-dialog
     header="Edit Structure"
     [(visible)]="displayEditDialog"
     [modal]="true"
     [closable]="false"
+<<<<<<< HEAD
     [style]="{ width: '30rem', height: '30rem' }"
+=======
+    [style]="{ width: '30rem' }"
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
   >
     <div class="mb-4">
       <label class="block text-sm font-medium mb-1">Name</label>
@@ -65,11 +114,19 @@
         class="w-full p-2 border rounded"
       />
     </div>
+<<<<<<< HEAD
 
     <div class="text-red-500 text-sm mb-3" *ngIf="errorMessage">
       {{ errorMessage }}
     </div>
 
+=======
+  
+    <div class="text-red-500 text-sm mb-3" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+  
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
     <ng-template pTemplate="footer">
       <button
         pButton
@@ -82,18 +139,31 @@
         label="Cancel"
         icon="pi pi-times"
         class="p-button-secondary"
+<<<<<<< HEAD
         (click)="displayEditDialog = false"
       ></button>
     </ng-template>
   </p-dialog>
 
   <!-- Add Structure Dialog -->
+=======
+        (click)="displayEditDialog = false; errorMessage = ''"
+      ></button>
+    </ng-template>
+  </p-dialog>
+  
+  <!-- Add Dialog -->
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
   <p-dialog
     [(visible)]="displayAddDialog"
     header="Add Structure"
     [modal]="true"
     [closable]="false"
+<<<<<<< HEAD
     [style]="{ width: '30rem', height: '30rem' }"
+=======
+    [style]="{ width: '30rem' }"
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
   >
     <div class="mb-4">
       <label class="block text-sm font-medium mb-1">Name</label>
@@ -104,25 +174,45 @@
         class="w-full p-2 border rounded"
       />
     </div>
+<<<<<<< HEAD
 
     <div class="text-red-500 text-sm mb-3" *ngIf="errorMessage">
       {{ errorMessage }}
     </div>
 
+=======
+  
+    <div class="text-red-500 text-sm mb-3" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+  
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
     <ng-template pTemplate="footer">
       <button
         type="button"
         pButton
         label="Cancel"
         class="p-button-secondary"
+<<<<<<< HEAD
         (click)="displayAddDialog = false"
+=======
+        (click)="displayAddDialog = false; errorMessage = ''"
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
       ></button>
       <button
         pButton
         label="Add"
         class="p-button-primary"
         (click)="addStructure()"
+<<<<<<< HEAD
         [disabled]="!(newStructure.name)"
       ></button>
     </ng-template>
   </p-dialog>
+=======
+        [disabled]="!newStructure.name.trim()"
+      ></button>
+    </ng-template>
+  </p-dialog>
+  
+>>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
