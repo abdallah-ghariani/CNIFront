@@ -1,0 +1,47 @@
+<div class="p-4">
+    <p-confirmdialog></p-confirmdialog>
+
+    <p-table [value]="requests()" [paginator]="true" [rows]="5">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-request let-i="rowIndex">
+        <tr>
+          <td>{{ i + 1 }}</td>
+          <td>{{ request.id }}</td>
+          <td>{{ request.status }}</td>
+          <td>
+            <button
+              pButton
+              icon="pi pi-check"
+              class="p-button-rounded p-button-success mr-2"
+              (click)="accept(request.id)"
+              [disabled]="request.status === 'ACCEPTED'"
+            ></button>
+
+            <button
+              pButton
+              icon="pi pi-times"
+              class="p-button-rounded p-button-warning mr-2"
+              (click)="refuse(request.id)"
+              [disabled]="request.status === 'REFUSED'"
+            ></button>
+
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger"
+              (click)="confirmDelete(request.id)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  

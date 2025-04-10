@@ -1,27 +1,40 @@
 import { Routes } from "@angular/router";
-import { LoginComponent } from "./auth/login/login.component";
-import { TestComponent } from "./test/test.component";
+import { LoginComponent } from "./components/login/login.component";
+import { TestComponent } from "./components/test/test.component";
 import { UserListComponent } from "./components/user-list/user-list.component";
-import { UserFormComponent } from "./components/user-form/user-form.component";
-import { LayoutComponent } from "./layout/layout.component";
 import { loginGuard } from "./login.guard";
 import { SecteurListComponent } from "./components/secteur/secteur.component"; // Use SecteurListComponent here
 import { StructureListComponent } from "./components/structure/structure.component";
+import { AdherationRequestListComponent } from "./components/adheration/adheration.component";
+import { DocumentationComponent } from "./components/documentation/documentation.component";
+import { adminGuard } from "./admin.guard";
+import { AdminLayoutComponent } from "./layout/admin.layout.component";
+import { UserLayoutComponent } from "./layout/user.layout.component";
+import { ApiGridComponent } from "./components/api-grid/api-grid.component";
+
 
 export const routes: Routes = [
   { path: "login", component: LoginComponent },
   {
     path: "",
-    component: LayoutComponent,
-    canActivate: [loginGuard],
+    component: UserLayoutComponent,
+    children: [
+      { path: "", component: ApiGridComponent},
+      { path: "test", component: TestComponent, canActivate:[ loginGuard ]}
+    ],
+  },
+  {
+    path: "admin",
+    component: AdminLayoutComponent,
+    canActivate: [loginGuard, adminGuard],
     children: [
       { path: "", component: TestComponent },
       { path: "users", component: UserListComponent },
-      { path: "users/add", component: UserFormComponent },
-      { path: "users/edit/:id", component: UserFormComponent },
-      { path: "secteurs", component: SecteurListComponent }, 
-      { path: 'structures', component: StructureListComponent },
+      { path: "secteurs", component: SecteurListComponent },
+      { path: "structures", component: StructureListComponent },
+      { path: "adheration-requests",component: AdherationRequestListComponent },
+      { path: "documentation", component: DocumentationComponent },
     ],
   },
-  { path: "**", redirectTo: "" },
+  { path: "**", redirectTo: '' },
 ];

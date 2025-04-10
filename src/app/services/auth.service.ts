@@ -4,10 +4,11 @@ import { Login } from "../models/login";
 import { AuthResponse } from "../models/auth-response";
 import { environment } from "../../environments/environment";
 //import { Signup } from '../models/signup';
-import { catchError, map, of, shareReplay, tap } from "rxjs";
+import { catchError, map, Observable, of, shareReplay, switchMap, tap } from "rxjs";
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { Router } from "@angular/router";
-import { User } from "../models/user";
+import { JwtToken, User } from "../models/user";
+import { Role } from "../models/roles";
 
 const BACKEND_URL = environment.BACKEND_URL + "auth/";
 
@@ -28,7 +29,8 @@ export class AuthService {
       shareReplay(),
       tap((response) => {
         this.accessToken = response.token;
-      })
+      }),
+      switchMap( _ => this.getLoggedInUser()),
     );
   }
 
@@ -42,13 +44,13 @@ export class AuthService {
     return this.http.post<AuthResponse>(BACKEND_URL+'register',signup);
   }*/
 
-  getLoggedInUser() {
+  getLoggedInUser():Observable<JwtToken|undefined|null> {
     if (this.accessToken) {
-      return of(this.jwt.decodeToken(this.accessToken));
+      return of(this.jwt.decodeToken<JwtToken>(this.accessToken));
     }
     return this.getToken().pipe(map(token => {
       if(token)
-        return this.jwt.decodeToken(token)
+        return this.jwt.decodeToken<JwtToken>(token)
       return undefined;
     }));
   }

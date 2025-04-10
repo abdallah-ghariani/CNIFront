@@ -5,3 +5,8 @@ export interface User {
   role: Role;
   username: string;
 }
+
+export interface JwtToken {
+  sub: string,
+  role: Role
+}

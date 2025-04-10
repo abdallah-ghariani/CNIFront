@@ -1,0 +1,85 @@
+<p-button
+label="Upload Document"
+icon="pi pi-upload"
+(click)="showDialog = true"
+class="mb-4"
+></p-button>
+
+<p-table
+[value]="documents"
+[paginator]="true"
+[rows]="5"
+responsiveLayout="scroll"
+>
+<ng-template pTemplate="header">
+  <tr>
+    <th>Title</th>
+    <th>Description</th>
+    <th>File</th>
+    <th>Date</th>
+    <th>Actions</th>
+  </tr>
+</ng-template>
+<ng-template pTemplate="body" let-doc>
+  <tr>
+    <td>{{ doc.title }}</td>
+    <td>{{ doc.description }}</td>
+    <td><a [href]="doc.fileUrl" target="_blank">View</a></td>
+    <td>{{ doc.uploadedAt | date : "short" }}</td>
+    <td>
+      <button
+        pButton
+        icon="pi pi-trash"
+        class="p-button-danger p-button-sm"
+        (click)="delete(doc.id)"
+      ></button>
+      <button
+        pButton
+        icon="pi pi-download"
+        class="p-button-info p-button-sm"
+        (click)="download(doc.id)"
+      ></button>
+    </td>
+  </tr>
+</ng-template>
+</p-table>
+
+<p-dialog
+header="Upload Documentation"
+[(visible)]="showDialog"
+[modal]="true"
+[closable]="true"
+[style]="{ width: '30vw' }"
+>
+<form (ngSubmit)="upload()">
+  <div class="mb-2">
+    <label>Title:</label>
+    <input
+      type="text"
+      [(ngModel)]="newDoc.title"
+      name="title"
+      class="p-inputtext p-component w-full"
+      required
+    />
+  </div>
+  <div class="mb-2">
+    <label>Description:</label>
+    <textarea
+      [(ngModel)]="newDoc.description"
+      name="description"
+      class="p-inputtext p-component w-full"
+      required
+    ></textarea>
+  </div>
+  <div class="mb-4">
+    <label>File:</label>
+    <input type="file" (change)="onFileSelected($event)" required />
+  </div>
+  <p-button
+    type="submit"
+    label="Upload"
+    icon="pi pi-check"
+    class="w-full"
+  ></p-button>
+</form>
+</p-dialog>

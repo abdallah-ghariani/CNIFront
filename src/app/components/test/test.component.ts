@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
-import { environment } from "../../environments/environment";
-import { AuthService } from "../services/auth.service";
+import { environment } from "../../../environments/environment";
+import { AuthService } from "../../services/auth.service";
+import { Role } from "../../models/roles";
 const BACKEND_URL = environment.BACKEND_URL + "test";
 @Component({
   selector: "app-test",
@@ -15,7 +16,7 @@ const BACKEND_URL = environment.BACKEND_URL + "test";
 })
 export class TestComponent implements OnInit {
   name: string = "";
-  role = "";
+  role ?: Role;
 
   constructor(private authService: AuthService) {}
 

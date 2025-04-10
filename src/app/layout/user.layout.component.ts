@@ -6,7 +6,7 @@ import { MenuModule } from 'primeng/menu';
 import { AuthService } from '../services/auth.service';
 
 @Component({
-  selector: 'app-layout',
+  selector: 'app-User-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, CommonModule, MenuModule],
   template: `
@@ -71,17 +71,15 @@ import { AuthService } from '../services/auth.service';
     }
   `]
 })
-export class LayoutComponent {
+export class UserLayoutComponent {
   sidebarOpen = false;
-  pageTitle = 'Admin';
+  pageTitle = 'User';
 
   constructor(private authService: AuthService, private router: Router) {}
 
   sidebarItems: { label: string; link: string; icon: string }[] = [
     { label: 'Dashboard', link: '', icon: 'pi pi-home' },
-    { label: 'Users', link: 'users', icon: 'pi pi-users' },
-    { label: 'Secteurs', link: 'secteurs', icon: 'pi pi-list' },
-    { label: 'Structures', link: 'structures', icon: 'pi pi-sitemap' },
+    { label: 'Test', link: 'test', icon: 'pi pi-address-book' }
   ];
 
   menuItems: MenuItem[] = [
@@ -95,6 +93,6 @@ export class LayoutComponent {
   }
 
   logout() {
-    this.authService.logout().subscribe(() => this.router.navigateByUrl('login'));
+    this.authService.logout().subscribe(() => this.router.navigateByUrl('/'));
   }
 }

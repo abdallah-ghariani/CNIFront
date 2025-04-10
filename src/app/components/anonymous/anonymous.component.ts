@@ -1,15 +1,14 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-user-form',
+  selector: 'app-anonymous',
   imports: [],
   template: `
     <p>
-      user-form works!
+      anonymous works!
     </p>
   `,
-  styles: ``
 })
-export class UserFormComponent {
+export class AnonymousComponent {
 
 }

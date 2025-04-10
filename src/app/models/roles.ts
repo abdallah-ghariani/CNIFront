@@ -1,7 +1,7 @@
 export enum Role {
-    admin,
-    consumer,
-    provider
+    admin = "admin",
+    consumer = "consumer",
+    provider = "provider"
 }
 
 export const Roles = ["admin", "consumer", "provider"]
