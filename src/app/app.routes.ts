@@ -10,7 +10,7 @@ import { DocumentationComponent } from "./components/documentation/documentation
 import { adminGuard } from "./admin.guard";
 import { AdminLayoutComponent } from "./layout/admin.layout.component";
 import { UserLayoutComponent } from "./layout/user.layout.component";
-import { ApiGridComponent } from "./components/api-grid/api-grid.component";
+import { ApiListComponent } from "./components/api/api.component";
 
 
 export const routes: Routes = [
@@ -19,7 +19,7 @@ export const routes: Routes = [
     path: "",
     component: UserLayoutComponent,
     children: [
-      { path: "", component: ApiGridComponent},
+      
       { path: "test", component: TestComponent, canActivate:[ loginGuard ]}
     ],
   },
@@ -34,6 +34,7 @@ export const routes: Routes = [
       { path: "structures", component: StructureListComponent },
       { path: "adheration-requests",component: AdherationRequestListComponent },
       { path: "documentation", component: DocumentationComponent },
+      { path: 'apis', component: ApiListComponent }
     ],
   },
   { path: "**", redirectTo: '' },

@@ -1,0 +1,52 @@
+<div class="relative w-full h-screen overflow-hidden font-sans text-gray-800">
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm transition-all duration-300 px-4 py-3">
+    <div class="flex items-center justify-between w-full">
+      <!-- Left: Logo -->
+      <div class="flex items-center">
+        <img src="images/CNI.jpg" alt="CNI Logo" class="w-24 sm:w-28" />
+      </div>
+
+      <!-- Center: Navigation -->
+      <nav class="flex gap-x-6 sm:gap-x-10 text-xl sm:text-2xl font-semibold text-blue-900 items-center ml-12 sm:ml-16">
+        <a [routerLink]="'user'" class="hover:underline transition">Accueil</a>
+        <a [routerLink]="'user/apis'" class="hover:underline transition">API</a>
+        <a [routerLink]="'user/docs'" class="hover:underline transition">Documentation</a>
+        <a [routerLink]="'user/support'" class="hover:underline transition">Support</a>
+      </nav>
+
+      <!-- Right: Login + Search -->
+      <div class="flex flex-col items-end gap-2">
+        <!-- Login Button -->
+        <p-menu #menu [model]="menuItems" [popup]="true"></p-menu>
+        <button  
+          (click)="menu.toggle($event)" 
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-button-color hover:bg-primary-400 focus:outline-none">
+          <i class="pi pi-user text-base"></i>
+        </button>
+
+        <!-- Search Bar -->
+        <p-iconfield class="w-80">
+          <p-inputicon styleClass="pi pi-search" />
+          <input type="text" pInputText placeholder="Search" class="w-full px-2 py-2 text-lg" />
+        </p-iconfield>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Spacer -->
+  <div class="pt-40">
+    <!-- Background Video Section -->
+    <div class="relative">
+      <div class="absolute inset-0 bg-white opacity-95 z-20"></div>
+      <video autoplay muted loop preload="auto" class="w-full h-full object-cover z-0">
+        <source src="video/bg-video.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <h1 class="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-900 text-5xl sm:text-6xl font-bold z-30 text-center">
+        Welcome to<br />the first Tunisian's<br />Government portal
+      </h1>
+    </div>
+  </div>
+
+  <div style="height: 1600px;"></div>
+</div>

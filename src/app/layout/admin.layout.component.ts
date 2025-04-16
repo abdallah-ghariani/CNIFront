@@ -25,6 +25,7 @@ export class AdminLayoutComponent {
     { label: 'Structures', link: 'structures', icon: 'pi pi-sitemap' },
     { label: 'Adherations', link: 'adheration-requests', icon: 'pi pi-id-card' },
     { label: 'Documentation', link: 'documentation', icon: 'pi pi-book' },
+    { label: 'APIs', link: 'apis', icon: 'pi pi-cloud' },
 
   ];
 
