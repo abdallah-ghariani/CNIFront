@@ -1,38 +1,27 @@
-// user-list.component.ts
-import { Component, OnInit, signal } from '@angular/core';
-import { UserService } from '../../services/user.service';
-import { User } from '../../models/user'; // Import your User model
-import { Role, Roles } from '../../models/roles'; 
-import { TableLazyLoadEvent, TableModule } from 'primeng/table';  // For p-table
-import { DialogModule } from 'primeng/dialog';  // For p-dialog
-import { InputTextModule } from 'primeng/inputtext';  // For pInputText
-import { ButtonModule } from 'primeng/button';  // For pButton
-import { DropdownModule } from 'primeng/dropdown';  // For p-select
-import { ToastModule } from 'primeng/toast';  // For toast notifications (optional)
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';  // For ngModel
-import { HttpClientModule } from '@angular/common/http';  // For HttpClient
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';  // For PrimeNG animations
-import { ConfirmDialogModule } from 'primeng/confirmdialog';  // Import this module
-import { ConfirmationService, FilterMetadata } from 'primeng/api';
+import { Component, signal } from "@angular/core";
+import { UserService } from "../../services/user.service";
+import { User } from "../../models/user";
+import { ConfirmationService, FilterMetadata } from "primeng/api";
+import { TableLazyLoadEvent, TableModule } from "primeng/table";
+import { DialogModule } from "primeng/dialog";
+import { ButtonModule } from "primeng/button";
+import { FormsModule } from "@angular/forms";
+import { InputTextModule } from "primeng/inputtext";
+import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { Role, Roles } from "../../models/roles";
+import { SelectModule } from "primeng/select";
 @Component({
-  selector: 'app-user-list',
-  templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.css'],
+  selector: "app-user-list",
   imports: [
-    BrowserModule,
-    FormsModule,  // Add FormsModule to use ngModel
-    HttpClientModule,
-    BrowserAnimationsModule,
-    TableModule,  // Add PrimeNG Table module
-    DialogModule,  // Add PrimeNG Dialog module
-    InputTextModule,  // Add PrimeNG InputText module
-    ButtonModule,  // Add PrimeNG Button module
-    DropdownModule,  // Add PrimeNG Dropdown module
-    ToastModule, 
-    ConfirmDialogModule
+    TableModule,
+    DialogModule,
+    ButtonModule,
+    FormsModule,
+    InputTextModule,
+    ConfirmDialogModule,
+    SelectModule,
   ],
+  templateUrl: './user-list.component.html',
   styles: [`
   ::ng-deep .p-datatable-table-container{
     min-height : 300px;

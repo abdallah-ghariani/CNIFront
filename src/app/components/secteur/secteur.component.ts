@@ -1,4 +1,3 @@
-// secteur-list.component.ts
 import { Component, signal } from '@angular/core';
 import { SecteurService } from '../../services/secteur.service';
 import { Secteur } from '../../models/secteur';
@@ -14,7 +13,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-secteur-list',
-  standalone: true,
   imports: [
     TableModule,
     DialogModule,
@@ -25,32 +23,20 @@ import { CommonModule } from '@angular/common';
     SelectModule,
     CommonModule
   ],
-<<<<<<< HEAD
   templateUrl:'secteur.component.html' ,
   styles: [`
     ::ng-deep .p-datatable-table-container {
       min-height: 300px;
     }
   `],
-=======
-  templateUrl: './secteur.component.html',
-  styleUrls: ['./secteur.component.css'],
->>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
   providers: [ConfirmationService],
 })
 export class SecteurListComponent {
   secteurs = signal<Secteur[]>([]);
-<<<<<<< HEAD
   displayEditDialog: boolean = false;
   displayAddDialog: boolean = false;
   selectedSecteur: Secteur = { id: '', name: '' };  
   newSecteur = { name: '' }; 
-=======
-  displayEditDialog = false;
-  displayAddDialog = false;
-  selectedSecteur: Secteur = { id: '', name: '' };
-  newSecteur = { name: '' };
->>>>>>> 8a1db98e5894d0bdbaea46b367805ae039a22cb5
   loading = false;
   total = 0;
   errorMessage = '';
@@ -62,17 +48,13 @@ export class SecteurListComponent {
 
   loadSecteurs(event: TableLazyLoadEvent) {
     this.loading = true;
-    const size = event.rows ?? 5;
-    const page = Math.floor((event.first ?? 0) / size);
+    const size = event.rows;
+    const page = Math.floor((event.first || 0) / (size || 1));
     const name = event.filters?.['name'] as FilterMetadata | undefined;
-
-    this.secteurService.getSecteurs(page, size, name?.value).subscribe({
-      next: (page) => {
-        this.secteurs.set(page.content);
-        this.total = page.totalElements;
-        this.loading = false;
-      },
-      error: () => this.loading = false
+    this.secteurService.getSecteurs(page, (size || 1), name?.value).subscribe(page => {
+      this.secteurs.set(page.content);
+      this.total = page.totalElements;
+      this.loading = false;
     });
   }
 
@@ -89,37 +71,34 @@ export class SecteurListComponent {
   }
 
   saveSecteur() {
-    if (!this.selectedSecteur?.name) {
-      this.errorMessage = 'Name is required.';
-      return;
+    if (this.selectedSecteur) {
+      this.secteurService.updateSecteur(this.selectedSecteur.id, this.selectedSecteur).subscribe({
+        next: (secteur) => {
+          this.displayEditDialog = false;
+          const secteurs = this.secteurs();
+          const index = secteurs.findIndex((s) => s.id === secteur.id);
+          secteurs[index] = secteur;
+          this.secteurs.set([...secteurs]);
+        },
+        error: (err) => {
+          this.errorMessage = err.error.detail;
+        },
+      });
     }
-
-    this.secteurService.updateSecteur(this.selectedSecteur.id, this.selectedSecteur).subscribe({
-      next: (updated) => {
-        const updatedList = this.secteurs().map(s =>
-          s.id === updated.id ? updated : s
-        );
-        this.secteurs.set(updatedList);
-        this.displayEditDialog = false;
-      },
-      error: (err) => this.errorMessage = err?.error?.detail || 'Update failed.'
-    });
   }
 
   addSecteur() {
-    if (!this.newSecteur?.name) {
-      this.errorMessage = 'Name is required.';
-      return;
+    if (this.newSecteur) {
+      this.secteurService.addSecteur(this.newSecteur).subscribe({
+        next: (secteur) => {
+          this.displayAddDialog = false;
+          this.secteurs.set([...this.secteurs(), secteur]);
+        },
+        error: (err) => {
+          this.errorMessage = err.error.detail;
+        },
+      });
     }
-
-    this.secteurService.addSecteur(this.newSecteur).subscribe({
-      next: (created) => {
-        this.secteurs.set([...this.secteurs(), created]);
-        this.displayAddDialog = false;
-        this.newSecteur = { name: '' };
-      },
-      error: (err) => this.errorMessage = err?.error?.detail || 'Creation failed.'
-    });
   }
 
   deleteSecteur(id: string) {
@@ -131,9 +110,10 @@ export class SecteurListComponent {
       acceptLabel: 'Delete',
       accept: () => {
         this.secteurService.deleteSecteur(id).subscribe(() => {
-          this.secteurs.set(this.secteurs().filter(s => s.id !== id));
+          const secteurs = this.secteurs();
+          this.secteurs.set(secteurs.filter((secteur) => secteur.id !== id));
         });
-      }
+      },
     });
   }
 }
