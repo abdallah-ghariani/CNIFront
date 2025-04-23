@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { Injectable, signal } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { environment } from "../../environments/environment";
 import { catchError, map, of, shareReplay, tap } from "rxjs";
 import { Adheration } from "../models/adheration";
@@ -17,7 +17,7 @@ export class AdherationService {
   }
 
   acceptRequest(id: string, message?: string) {
-    return this.http.post(BACKEND_URL + `accept/${id}`, { message }).pipe(shareReplay());
+    return this.http.post<{message: string, requestId: string}>(BACKEND_URL + `accept/${id}`, { message }).pipe(shareReplay());
   }
 
 
@@ -27,5 +27,15 @@ export class AdherationService {
 
   deleteRequest(id: string) {
     return this.http.delete(BACKEND_URL + `delete/${id}`).pipe(shareReplay());
+  }
+
+  createRequest(name: string, structure: string, secteur: string, role: string, message?: string) {
+    return this.http.post(BACKEND_URL + 'request', { name, structure, secteur, role, message }).pipe(
+      shareReplay(),
+      catchError(error => {
+        console.error('Error creating adheration request:', error);
+        return of({ success: false, error: error.message || 'An error occurred' });
+      })
+    );
   }
 }

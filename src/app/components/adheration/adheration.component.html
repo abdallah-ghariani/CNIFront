@@ -8,6 +8,7 @@
           <th>ID</th>
           <th>Status</th>
           <th>Actions</th>
+          <th>Details</th>
         </tr>
       </ng-template>
 
@@ -40,8 +41,45 @@
               (click)="confirmDelete(request.id)"
             ></button>
           </td>
+          <td>
+            <button pButton 
+              label="Show Request" 
+              icon="pi pi-eye" 
+              class="p-button-sm p-button-text" 
+              (click)="showDetails(request)">
+            </button>
+          </td>
         </tr>
       </ng-template>
     </p-table>
+
+    <!-- Details Dialog -->
+    <p-dialog 
+      header="Request Details" 
+      [(visible)]="displayDetailsDialog" 
+      [modal]="true" 
+      [draggable]="false" 
+      [resizable]="false" 
+      [style]="{width: '500px'}"
+      [breakpoints]="{'960px': '75vw', '640px': '90vw'}">
+      <div *ngIf="selectedRequest" class="grid p-fluid">
+        <div class="col-12 md:col-6">
+          <p><strong>ID:</strong> {{selectedRequest.id}}</p>
+          <p><strong>Name:</strong> {{selectedRequest.name}}</p>
+          <p><strong>Structure:</strong> {{selectedRequest.structure}}</p>
+        </div>
+        <div class="col-12 md:col-6">
+          <p><strong>Secteur:</strong> {{selectedRequest.secteur}}</p>
+          <p><strong>Role:</strong> {{selectedRequest.role}}</p>
+          <p><strong>Status:</strong> {{selectedRequest.status}}</p>
+        </div>
+        <div class="col-12" *ngIf="selectedRequest.message">
+          <p><strong>Message:</strong></p>
+          <p class="p-3 border-round surface-100">{{selectedRequest.message}}</p>
+        </div>
+      </div>
+      <ng-template pTemplate="footer">
+        <button pButton type="button" label="Close" icon="pi pi-times" (click)="displayDetailsDialog=false"></button>
+      </ng-template>
+    </p-dialog>
   </div>
-  

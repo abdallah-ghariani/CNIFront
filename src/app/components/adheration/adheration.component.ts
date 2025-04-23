@@ -1,5 +1,9 @@
 import { Component, signal, computed, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { AdherationService } from '../../services/adheration.service';
+import { UserService } from '../../services/user.service';
+import { StructureService } from '../../services/structure.service';
+import { SecteurService } from '../../services/secteur.service';
 import { ConfirmationService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -13,6 +17,7 @@ import { Adheration } from '../../models/adheration';
   selector: 'app-adheration-request-list',
   standalone: true,
   imports: [
+    CommonModule,
     TableModule,
     DialogModule,
     ButtonModule,
@@ -25,9 +30,14 @@ import { Adheration } from '../../models/adheration';
 })
 export class AdherationRequestListComponent {
   requests = signal<Adheration[]>([]);
+  selectedRequest: Adheration | null = null;
+  displayDetailsDialog = false;
 
   constructor(
     private adherationService: AdherationService,
+    private userService: UserService,
+    private structureService: StructureService,
+    private secteurService: SecteurService,
     private confirmationService: ConfirmationService
   ) {
     this.loadRequests();
@@ -37,6 +47,11 @@ export class AdherationRequestListComponent {
     this.adherationService.getAdherationRequests().subscribe((data) => {
       this.requests.set(data);
     });
+  }
+
+  showDetails(request: Adheration) {
+    this.selectedRequest = request;
+    this.displayDetailsDialog = true;
   }
 
   accept(id: string) {

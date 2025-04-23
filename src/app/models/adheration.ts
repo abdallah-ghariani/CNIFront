@@ -1,5 +1,9 @@
 export interface Adheration {
     id: string;
-    status:String 
-  }
-  
+    name: string;
+    structure: string;
+    secteur: string;
+    role: string;
+    message?: string;
+    status: string;
+}
