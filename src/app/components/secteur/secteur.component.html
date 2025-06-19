@@ -1,11 +1,16 @@
-<div class="p-4">
+<div class="p-4 bg-gray-50 min-h-screen">
     <p-confirmdialog></p-confirmdialog>
-    <button
-      pButton
-      label="Add Secteur"
-      class="p-button-primary mb-2"
-      (click)="openAddDialog()"
-    ></button>
+    <!-- Page Header -->
+    <div class="mb-6 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-800">Sectors Management</h1>
+      <button
+        pButton
+        label="Add Sector"
+        icon="pi pi-plus"
+        class="p-button-primary"
+        (click)="openAddDialog()"
+      ></button>
+    </div>
     <div>
       <p-table
         [value]="secteurs()"
@@ -19,28 +24,34 @@
       >
         <ng-template pTemplate="header">
           <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Action</th>
+            <th style="width: 5%">#</th>
+            <th style="width: 75%">Name</th>
+            <th style="width: 20%; text-align: center;">Action</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-secteur let-i="rowIndex">
           <tr>
             <td>{{ i + 1 }}</td>
             <td>{{ secteur.name }}</td>
-            <td>
-              <button
-                pButton
-                label="Edit"
-                class="p-button-rounded p-button-info mr-2"
-                (click)="openEditDialog(secteur)"
-              ></button>
-              <button
-                pButton
-                label="Delete"
-                class="p-button-rounded p-button-danger"
-                (click)="deleteSecteur(secteur.id)"
-              ></button>
+            <td style="text-align: center;">
+              <div class="flex gap-2 justify-center">
+                <button
+                  pButton
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-info"
+                  (click)="openEditDialog(secteur)"
+                  pTooltip="Edit Sector"
+                  tooltipPosition="top"
+                ></button>
+                <button
+                  pButton
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  (click)="deleteSecteur(secteur.id)"
+                  pTooltip="Delete Sector"
+                  tooltipPosition="top"
+                ></button>
+              </div>
             </td>
           </tr>
         </ng-template>

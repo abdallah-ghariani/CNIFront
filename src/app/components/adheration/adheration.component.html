@@ -1,47 +1,178 @@
-<div class="p-4">
+<div class="p-4 bg-gray-50 min-h-screen">
+    <p-toast></p-toast>
     <p-confirmdialog></p-confirmdialog>
+    
+    <!-- Page Header -->
+    <div class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Membership Requests</h1>
+        <button
+            pButton
+            icon="pi pi-refresh"
+            label="Refresh"
+            class="p-button-primary"
+            (click)="loadRequests()"
+        ></button>
+    </div>
+    
+    <div class="card shadow-sm border-round p-4">
 
-    <p-table [value]="requests()" [paginator]="true" [rows]="5">
+    <p-table 
+        [value]="requests()" 
+        [paginator]="true" 
+        [rows]="5" 
+        styleClass="p-datatable-gridlines p-datatable-sm" 
+        [rowHover]="true"
+        responsiveLayout="scroll"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} requests"
+        [showCurrentPageReport]="true">
       <ng-template pTemplate="header">
-        <tr>
-          <th>#</th>
-          <th>ID</th>
-          <th>Status</th>
-          <th>Actions</th>
+        <tr class="bg-primary-50">
+          <th class="text-center" style="width: 3%">#</th>
+          <th style="width: 15%">Name</th>
+          <th style="width: 15%">Email</th>
+          <th style="width: 20%">Organisation</th>
+          <th style="width: 15%">Sector</th>
+          <th style="width: 10%">Status</th>
+          <th style="width: 12%">Actions</th>
+          <th style="width: 10%">Details</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-request let-i="rowIndex">
         <tr>
-          <td>{{ i + 1 }}</td>
-          <td>{{ request.id }}</td>
-          <td>{{ request.status }}</td>
+          <td class="text-center font-semibold">{{ i + 1 }}</td>
+          <td class="font-medium">{{ request.name }}</td>
           <td>
-            <button
-              pButton
-              icon="pi pi-check"
-              class="p-button-rounded p-button-success mr-2"
-              (click)="accept(request.id)"
-              [disabled]="request.status === 'ACCEPTED'"
-            ></button>
+            <span class="text-sm">{{ request.email }}</span>
+          </td>
+          <td>
+            <span class="organisation-badge p-2 text-xs rounded-lg inline-block">
+              {{ getStructureName(request.structure) }}
+            </span>
+          </td>
+          <td>
+            <span class="sector-badge p-2 text-xs rounded-lg inline-block">
+              {{ getSecteurName(request.secteur) }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge px-2 py-1 text-xs font-medium rounded-full" [ngClass]="{
+              'bg-blue-100 text-blue-900': request.status === 'PENDING',
+              'bg-green-100 text-green-900': request.status === 'ACCEPTED',
+              'bg-red-100 text-red-900': request.status === 'REFUSED'
+            }">
+              {{ request.status }}
+            </span>
+          </td>
+          <td>
+            <div class="flex gap-2 justify-content-start">
+              <button
+                pButton
+                icon="pi pi-check"
+                pTooltip="Accept Request"
+                tooltipPosition="top"
+                class="p-button-rounded p-button-success p-button-sm"
+                (click)="accept(request.id)"
+                [disabled]="request.status === 'ACCEPTED'"
+              ></button>
 
-            <button
-              pButton
-              icon="pi pi-times"
-              class="p-button-rounded p-button-warning mr-2"
-              (click)="refuse(request.id)"
-              [disabled]="request.status === 'REFUSED'"
-            ></button>
+              <button
+                pButton
+                icon="pi pi-times"
+                pTooltip="Refuse Request"
+                tooltipPosition="top"
+                class="p-button-rounded p-button-warning p-button-sm"
+                (click)="refuse(request.id)"
+                [disabled]="request.status === 'REFUSED'"
+              ></button>
 
-            <button
-              pButton
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-danger"
-              (click)="confirmDelete(request.id)"
+              <button
+                pButton
+                icon="pi pi-trash"
+                pTooltip="Delete Request"
+                tooltipPosition="top"
+                class="p-button-rounded p-button-danger p-button-sm"
+                (click)="confirmDelete(request.id)"
+              ></button>
+            </div>
+          </td>
+          <td>
+            <button pButton 
+              label="View Details" 
+              icon="pi pi-eye" 
+              pTooltip="View Request Details"
+              tooltipPosition="top"
+              class="p-button-sm p-button-outlined p-button-info w-full" 
+              (click)="showDetails(request)"
             ></button>
           </td>
         </tr>
       </ng-template>
     </p-table>
+
+    <!-- Details Dialog -->
+    <p-dialog 
+      header="Request Details" 
+      [(visible)]="displayDetailsDialog" 
+      [modal]="true" 
+      [draggable]="false" 
+      [resizable]="false" 
+      [style]="{width: '500px'}"
+      [breakpoints]="{'960px': '75vw', '640px': '90vw'}"
+      styleClass="request-details-dialog"
+      contentStyleClass="p-4">
+      <div *ngIf="selectedRequest" class="grid p-fluid">
+        <div class="col-12 mb-3 border-bottom-1 border-300 pb-2">
+          <h3 class="text-lg font-semibold text-primary-700 m-0">User Information</h3>
+        </div>
+        
+        <div class="col-12 md:col-6 field">
+          <label class="block text-sm text-500 mb-1">ID</label>
+          <p class="text-900 font-medium">{{selectedRequest.id}}</p>
+        </div>
+        
+        <div class="col-12 md:col-6 field">
+          <label class="block text-sm text-500 mb-1">Status</label>
+          <span class="status-badge" [ngClass]="{
+            'bg-blue-100 text-blue-900': selectedRequest.status === 'PENDING',
+            'bg-green-100 text-green-900': selectedRequest.status === 'ACCEPTED',
+            'bg-red-100 text-red-900': selectedRequest.status === 'REFUSED'
+          }">
+            {{selectedRequest.status}}
+          </span>
+        </div>
+        
+        <div class="col-12 md:col-6 field">
+          <label class="block text-sm text-500 mb-1">Name</label>
+          <p class="text-900 font-medium">{{selectedRequest.name}}</p>
+        </div>
+        
+        <div class="col-12 mb-3 mt-2 border-bottom-1 border-300 pb-2">
+          <h3 class="text-lg font-semibold text-primary-700 m-0">Organization Details</h3>
+        </div>
+        
+        <div class="col-12 md:col-6 field">
+          <label class="block text-sm text-500 mb-1">Organisation</label>
+          <p class="text-900 font-medium">{{selectedStructureName}}</p>
+        </div>
+        
+        <div class="col-12 md:col-6 field">
+          <label class="block text-sm text-500 mb-1">Secteur</label>
+          <p class="text-900 font-medium">{{selectedSecteurName}}</p>
+        </div>
+        
+        <div class="col-12 mt-2" *ngIf="selectedRequest.message">
+          <div class="mb-3 border-bottom-1 border-300 pb-2">
+            <h3 class="text-lg font-semibold text-primary-700 m-0">Additional Message</h3>
+          </div>
+          <div class="p-3 border-round bg-gray-50 text-900 message-box">{{selectedRequest.message}}</div>
+        </div>
+      </div>
+      <ng-template pTemplate="footer">
+        <div class="flex justify-content-end">
+          <button pButton type="button" label="Close" icon="pi pi-times" class="p-button-outlined" (click)="displayDetailsDialog=false"></button>
+        </div>
+      </ng-template>
+    </p-dialog>
   </div>
-  
+</div>

@@ -1,0 +1,552 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
+import { StructureService } from '../../services/structure.service';
+import { SecteurService } from '../../services/secteur.service';
+import { ServiceManagementService } from '../../services/service.service';
+import { Api } from '../../models/api';
+import { ApiRequest } from '../../models/api-request';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputTextarea } from 'primeng/inputtextarea';
+import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
+import { CardModule } from 'primeng/card';
+import { DropdownModule } from 'primeng/dropdown';
+import { TabViewModule } from 'primeng/tabview';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { MessageService } from 'primeng/api';
+import { BadgeModule } from 'primeng/badge';
+import { TagModule } from 'primeng/tag';
+import { environment } from '../../../environments/environment';
+
+// Import the utility services and base component
+import { ApiHelpers } from '../../utils/api-helpers';
+import { ApiDataProviderService } from '../../utils/api-data-provider.service';
+import { ApiBaseComponent } from '../../utils/api-base.component';
+
+@Component({
+  selector: 'app-my-api',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    InputTextarea,
+    ToastModule,
+    DialogModule,
+    CardModule,
+    DropdownModule,
+    TabViewModule,
+    InputSwitchModule,
+    BadgeModule,
+    TagModule
+  ],
+  providers: [MessageService, ApiHelpers, ApiDataProviderService],
+  templateUrl: './my-api.component.html',
+  styleUrls: ['./my-api.component.css']
+})
+export class MyApiComponent extends ApiBaseComponent implements OnInit {
+  // Override the loading property from base class
+  override loading = false;
+  
+  // API data
+  myApis: Api[] = [];
+  
+  // Pagination
+  override page = 1;
+  itemsPerPage = 10;
+  globalFilter = '';
+  
+  // Make Math available to the template
+  Math = Math;
+  
+  // API request related properties
+  displayApiRequestSection = false;
+  selectedApi: Api | null = null;
+  requestInProgress = false;
+  requestType: 'access' | 'new' | 'modify' = 'new'; // Default to new API request
+  
+  // API details properties
+  apiDetailsVisible = false;
+  selectedApiDetails: Api | null = null;
+  
+  // Form model for API requests
+  requestForm = {
+    // Basic Info
+    name: '',
+    email: '',
+    secteur: '',
+    structure: '',
+    service: '',
+    description: '',
+    
+    // API Details
+    apiName: '',
+    apiVersion: 'v1',
+    baseUrl: '',
+    endpoints: [''] as string[],
+    endpoint: '',
+    documentation: '',
+    
+    // Authentication
+    requiresAuth: true,
+    authType: 'OAuth2',
+    apiKey: ''
+  };
+  
+  // Form validation tracking
+  fieldErrors: { [key: string]: boolean } = {
+    name: false,
+    email: false,
+    structure: false,
+    secteur: false,
+    service: false,
+    apiName: false,
+    baseUrl: false,
+    description: false
+  };
+  
+  // Lists for input/output examples
+  inputExamples: string[] = [];
+  outputExamples: string[] = [];
+  
+  // Dropdown data
+  structures: any[] = [];
+  sectors: any[] = [];
+  services: any[] = [];
+  
+  constructor(
+    private apiService: ApiService,
+    protected authService: AuthService,
+    protected structureService: StructureService,
+    protected secteurService: SecteurService,
+    protected serviceManagementService: ServiceManagementService,
+    protected override messageService: MessageService,
+    private http: HttpClient,
+    protected override apiHelpers: ApiHelpers,
+    protected override apiDataProvider: ApiDataProviderService
+  ) {
+    super(apiDataProvider, apiHelpers, messageService);
+  }
+  
+  override ngOnInit(): void {
+    super.ngOnInit();
+    
+    // Load APIs
+    this.loadMyApis();
+    
+    // Load dropdown options
+    this.loadStructures();
+    this.loadSectors();
+    this.loadServices();
+    
+    // Auto-populate user details from JWT token
+    this.setUserInfoFromToken();
+  }
+  
+  /**
+   * Set user details from JWT token
+   */
+  setUserInfoFromToken(): void {
+    const user = this.authService.getDecodedToken();
+    if (user) {
+      // Set the user's information in the form
+      this.requestForm.name = user.name || '';
+      this.requestForm.email = user.email || '';
+      
+      // Set structure and sector if available
+      if (user.structure) this.requestForm.structure = user.structure;
+      if (user.secteur) this.requestForm.secteur = user.secteur;
+      
+      console.log('Set user info from token:', this.requestForm);
+    } else {
+      console.log('No user token available');
+    }
+  }
+  
+  /**
+   * Method for global search in the table
+   */
+  onGlobalSearch(event: any): void {
+    this.globalFilter = event.target.value;
+  }
+  
+  /**
+   * Handle change in items per page
+   */
+  onItemsPerPageChange(event: any): void {
+    const value = parseInt(event.target.value);
+    if (!isNaN(value) && value > 0) {
+      this.itemsPerPage = value;
+      this.page = 1; // Reset to first page
+      
+      // Reload data if needed
+      this.loadMyApis();
+    }
+  }
+  
+  /**
+   * Load my APIs from the backend
+   */
+  loadMyApis(): void {
+    this.loading = true;
+    
+    this.apiService.getMyApis().subscribe({
+      next: (data: Api[]) => {
+        console.log('Loaded my APIs:', data);
+        this.myApis = data;
+        
+        // If no APIs, format the structure correctly
+        if (!this.myApis) this.myApis = [];
+        
+        // Sort by updated date if available
+        this.myApis.sort((a, b) => {
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+        
+        this.loading = false;
+      },
+      error: (error: unknown) => {
+        console.error('Error loading APIs:', error);
+        this.loading = false;
+        this.showError('Error', 'Failed to load your APIs.');
+      }
+    });
+  }
+  
+  /**
+   * Navigate to API details page
+   */
+  viewApiDetails(api: Api): void {
+    if (!api || !api.id) {
+      this.showError('Error', 'Cannot view details: Invalid API');
+      return;
+    }
+    window.open(`/user/apis/${api.id}`, '_blank');
+  }
+  
+  /**
+   * Open API editor to modify the API
+   */
+  editApi(api: Api): void {
+    if (!api || !api.id) {
+      this.showError('Error', 'Cannot edit: Invalid API');
+      return;
+    }
+    
+    // Just for demonstration purposes in this version
+    this.showInfo('Feature Coming Soon', 'API editing is not yet implemented');
+    
+    // In a real application, this would:
+    // 1. Populate a form with the API details
+    // 2. Allow the user to modify the API
+    // 3. Submit the changes to the API service
+    
+    console.log('Edit API:', api);
+    
+    // Pre-fill form with API details as a starting point
+    this.requestForm.apiName = api.name || '';
+    this.requestForm.description = api.description || '';
+    this.requestForm.baseUrl = api.baseUrl || '';
+    this.requestForm.apiVersion = api.version || 'v1';
+    
+    // Show the form in edit mode
+    this.requestType = 'modify';
+    this.selectedApi = api;
+    this.displayApiRequestSection = true;
+  }
+  
+  /**
+   * Submit the API request form for creating a new API
+   * Simplified to handle only new API creation
+   */
+  submitRequest(): void {
+    // Reset validation errors
+    Object.keys(this.fieldErrors).forEach(key => {
+      this.fieldErrors[key] = false;
+    });
+    
+    // Validate common required fields first
+    if (!this.requestForm.name) {
+      this.fieldErrors['name'] = true;
+      this.showError('Validation Error', 'Please provide your name');
+      return;
+    }
+
+    if (!this.requestForm.email) {
+      this.fieldErrors['email'] = true;
+      this.showError('Validation Error', 'Please provide your email');
+      return;
+    }
+
+    // Validate organization fields
+    if (!this.requestForm.structure) {
+      this.fieldErrors['structure'] = true;
+      this.showError('Validation Error', 'Please select a structure');
+      return;
+    }
+
+    if (!this.requestForm.secteur) {
+      this.fieldErrors['secteur'] = true;
+      this.showError('Validation Error', 'Please select a sector');
+      return;
+    }
+    
+    if (!this.requestForm.service) {
+      this.fieldErrors['service'] = true;
+      this.showError('Validation Error', 'Please select a service');
+      return;
+    }
+    
+    // Creating a new API - validate API-specific fields
+    if (!this.requestForm.apiName) {
+      this.fieldErrors['apiName'] = true;
+      this.showError('Validation Error', 'Please provide an API name');
+      return;
+    }
+
+    if (!this.requestForm.baseUrl) {
+      this.fieldErrors['baseUrl'] = true;
+      this.showError('Validation Error', 'Please provide a base URL for the API');
+      return;
+    }
+    
+    this.requestInProgress = true;
+    
+    // All validations passed, proceed with API request
+    this.submitNewApiRequest();
+  }
+  
+  /**
+   * Submit a request to create a new API
+   * Using a simplified, direct approach without temporary IDs or multi-step processes
+   */
+  private submitNewApiRequest(): void {
+    console.log('Creating a new API directly');
+
+    // Create API object with all relevant details
+    const newApi: Partial<Api> = {
+      name: this.requestForm.apiName,
+      description: this.requestForm.description,
+      secteur: this.requestForm.secteur,
+      structure: this.requestForm.structure,
+      service: this.requestForm.service,
+      providerId: this.requestForm.structure, // Use structure as provider ID
+      status: 'pending',
+      baseUrl: this.requestForm.baseUrl,
+      version: this.requestForm.apiVersion,
+      requiresAuth: this.requestForm.requiresAuth,
+      authType: this.requestForm.authType
+    };
+
+    // Create the API with pending status - admin will review and approve/reject
+    this.apiService.createApi({ ...newApi, status: 'pending' } as Api).subscribe({
+      next: (response: any) => {
+        console.log('Successfully created API with pending status:', response);
+
+        this.requestInProgress = false;
+        this.displayApiRequestSection = false;
+        this.showSuccess('Success', 'Your API has been submitted for approval.');
+        this.resetForm();
+        this.loadMyApis();
+      },
+      error: (err: any) => {
+        this.requestInProgress = false;
+        this.showError('Error', 'Failed to create new API. Please try again.');
+        console.error('Error creating new API:', err);
+      }
+    });
+  }
+  
+  /**
+   * Reset form fields to their default values
+   */
+  resetForm(): void {
+    // Preserve user info
+    const userInfo = {
+      name: this.requestForm.name,
+      email: this.requestForm.email,
+      secteur: this.requestForm.secteur,
+      structure: this.requestForm.structure,
+      service: this.requestForm.service
+    };
+    
+    this.requestForm = {
+      name: userInfo.name,
+      email: userInfo.email,
+      secteur: userInfo.secteur,
+      structure: userInfo.structure,
+      service: userInfo.service,
+      description: '',
+      apiName: '',
+      apiVersion: 'v1',
+      baseUrl: '',
+      endpoints: [''],
+      endpoint: '',
+      documentation: '',
+      requiresAuth: true,
+      authType: 'OAuth2',
+      apiKey: ''
+    };
+    
+    // Reset all field errors
+    Object.keys(this.fieldErrors).forEach(key => {
+      this.fieldErrors[key] = false;
+    });
+    
+    this.inputExamples = [];
+    this.outputExamples = [];
+  }
+  
+  /**
+   * Show the API request section
+   */
+  showApiRequestSection(): void {
+    // By default, assume we're creating a new API request
+    this.requestType = 'new';
+    this.selectedApi = null;
+    
+    // Reset the form before showing
+    this.resetForm();
+    
+    // Show the form
+    this.displayApiRequestSection = true;
+  }
+  
+  /**
+   * Handle the selection of request type
+   */
+  selectRequestType(type: 'access' | 'new' | 'modify'): void {
+    this.requestType = type;
+  }
+  
+  /**
+   * Cancel request with confirmation if data has been entered
+   */
+  cancelRequest(): void {
+    // Simple cancel for now
+    this.displayApiRequestSection = false;
+    this.selectedApi = null;
+    this.resetForm();
+  }
+  
+  /**
+   * Add a new input example to the list
+   */
+  addInputExample(): void {
+    this.inputExamples.push('');
+  }
+  
+  /**
+   * Remove an input example from the list
+   */
+  removeInputExample(index: number): void {
+    if (index >= 0 && index < this.inputExamples.length) {
+      this.inputExamples.splice(index, 1);
+    }
+  }
+  
+  /**
+   * Add a new output example to the list
+   */
+  addOutputExample(): void {
+    this.outputExamples.push('');
+  }
+  
+  /**
+   * Remove an output example from the list
+   */
+  removeOutputExample(index: number): void {
+    if (index >= 0 && index < this.outputExamples.length) {
+      this.outputExamples.splice(index, 1);
+    }
+  }
+  
+  /**
+   * Navigate to API exploration view
+   */
+  exploreApi(api: Api): void {
+    if (!api || !api.id) {
+      this.showError('Error', 'Cannot explore: Invalid API');
+      return;
+    }
+    
+    // For now, just show the API details
+    this.viewApiDetails(api);
+    
+    // In a real implementation, this would navigate to a dedicated
+    // API explorer component that allows testing endpoints
+    console.log('Explore API:', api.id);
+  }
+  
+  /**
+   * Show API details in the details dialog
+   */
+  showApiDetails(api: Api): void {
+    this.selectedApiDetails = api;
+    this.apiDetailsVisible = true;
+  }
+  
+  /**
+   * Format date for display
+   */
+  getFormattedDate(date: Date | string | undefined): string {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString();
+  }
+  
+  /**
+   * Get the severity class for PrimeNG Tag component based on API status
+   */
+  getStatusClass(status: string | undefined): 'info' | 'success' | 'warning' | 'danger' | 'secondary' {
+    if (!status) return 'info';
+    
+    switch (status.toLowerCase()) {
+      case 'approved': return 'success';
+      case 'active': return 'success';
+      case 'pending': return 'warning';
+      case 'rejected': return 'danger';
+      case 'inactive': return 'secondary';
+      default: return 'info';
+    }
+  }
+  
+  /**
+   * Load structures from the backend
+   */
+  loadStructures(): void {
+    this.structureService.getStructures().subscribe({
+      next: (data) => this.structures = data.map(s => ({ label: s.name, value: s.id })),
+      error: (err) => console.error('Error loading structures:', err)
+    });
+  }
+  
+  /**
+   * Load sectors from the backend
+   */
+  loadSectors(): void {
+    this.secteurService.getSecteurs().subscribe({
+      next: (data) => this.sectors = data.map(s => ({ label: s.name, value: s.id })),
+      error: (err) => console.error('Error loading sectors:', err)
+    });
+  }
+  
+  /**
+   * Load services from the backend
+   */
+  loadServices(): void {
+    this.serviceManagementService.getServices().subscribe({
+      next: (data) => this.services = data.map(s => ({ label: s.name, value: s.id })),
+      error: (err) => console.error('Error loading services:', err)
+    });
+  }
+}

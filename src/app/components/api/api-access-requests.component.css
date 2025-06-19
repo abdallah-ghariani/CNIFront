@@ -1,0 +1,30 @@
+/* Styles for the API Access Requests Component */
+
+:host ::ng-deep .p-datatable-table-container {
+  min-height: 300px;
+}
+
+/* Additional styling for the table */
+:host ::ng-deep .p-datatable {
+  margin-top: 1rem;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Styling for empty messages */
+:host ::ng-deep .text-center {
+  text-align: center;
+}
+
+/* Button spacing */
+.mr-2 {
+  margin-right: 0.5rem;
+}

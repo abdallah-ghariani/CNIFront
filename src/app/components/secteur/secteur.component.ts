@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -21,6 +22,7 @@ import { CommonModule } from '@angular/common';
     InputTextModule,
     ConfirmDialogModule,
     SelectModule,
+    TooltipModule,
     CommonModule
   ],
   templateUrl:'secteur.component.html' ,

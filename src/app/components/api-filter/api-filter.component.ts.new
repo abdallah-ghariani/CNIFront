@@ -1,0 +1,408 @@
+import { Component, OnInit, signal } from '@angular/core';
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
+import { StructureService } from '../../services/structure.service';
+import { ServiceManagementService } from '../../services/service.service';
+import { Api } from '../../models/api';
+import { Role } from '../../models/roles';
+import { JwtToken } from '../../models/user';
+import { Structure } from '../../models/structure';
+import { Secteur } from '../../models/secteur';
+import { Service } from '../../models/service';
+import { TableLazyLoadEvent, TableModule, Table } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { DropdownModule } from 'primeng/dropdown';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { RippleModule } from 'primeng/ripple';
+import { RouterModule } from '@angular/router';
+import { finalize, forkJoin } from 'rxjs';
+
+@Component({
+  selector: 'app-api-filter',
+  standalone: true,
+  imports: [
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    DropdownModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    DatePipe,
+    ProgressSpinnerModule,
+    RouterModule,
+    CardModule,
+    TagModule,
+    RippleModule
+  ],
+  templateUrl: './api-filter.component.html',
+  styleUrls: ['./api-filter.component.css']
+})
+export class ApiFilterComponent implements OnInit {
+  // Filter control properties
+  filterStep = 1; // 1: Select filter type, 2: Select specific filter value, 3: Show results
+  filterMode: 'service' | 'structure' | 'mystructure' | null = null; // Track which filter type is active
+  showApiTable = false; // Control visibility of the API table
+  selectedFilterValue: string | null = null; // Track the selected service or structure
+  selectedFilterLabel = ''; // User-friendly label for the selected filter
+  userStructure = ''; // Will be updated from user profile
+  noApisFound = false; // Flag to show message when no APIs are available for a structure
+  
+  // Service hierarchy related properties
+  serviceFilterStep = 1; // 1: Select main service, 2: Select sub-service
+  mainServices: Service[] = []; // List of main services
+  selectedMainService: Service | null = null; // Selected main service
+
+  // API data
+  apis = signal<Api[]>([]);
+  loading = false;
+  structuresLoading = false;
+  secteursLoading = false;
+  total = 0;
+  searchTerm = '';
+  
+  // Pagination
+  currentPage = 0;
+  itemsPerPage = 10;
+
+  // Structure and Secteur options from backend
+  structures: { label: string, value: string | null }[] = [];
+  services: { label: string, value: string | null }[] = [];
+  
+  // For Math operations in the template
+  Math = Math;
+
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService,
+    private structureService: StructureService,
+    private serviceManagementService: ServiceManagementService
+  ) {}
+
+  ngOnInit(): void {
+    // Show loading indicators
+    this.structuresLoading = true;
+    this.secteursLoading = true;
+    
+    // Get user info and role to set the user's structure
+    this.authService.getLoggedInUser().subscribe((jwtToken: JwtToken | undefined | null) => {
+      if (jwtToken && jwtToken.structure) {
+        this.userStructure = jwtToken.structure;
+      }
+    });
+    
+    // Load structures and secteurs from backend
+    this.loadStructures();
+    this.loadSecteurs();
+  }
+  
+  // Load all structures from backend (using a large page size to get all of them)
+  loadStructures(): void {
+    console.log('Attempting to load structures from backend');
+    this.structureService.getStructures(0, 1000).pipe(
+      finalize(() => {
+        this.structuresLoading = false;
+        console.log('Structure loading completed');
+      })
+    ).subscribe({
+      next: (response: any) => {
+        console.log('Structures response received:', response);
+        // Ensure we have content to map
+        if (response && response.content && response.content.length > 0) {
+          // Add default option
+          this.structures = [
+            { label: 'All structures', value: null },
+            ...response.content.map((structure: any) => ({
+              label: structure.name,
+              value: structure.id
+            }))
+          ];
+          
+          console.log(`Loaded ${response.content.length} structures from backend`);
+          console.log('Structures:', this.structures);
+        } else {
+          console.warn('No structures returned from backend, using fallback');
+          this.useStructuresFallback();
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading structures:', error);
+        this.useStructuresFallback();
+      }
+    });
+  }
+  
+  // Use fallback structures exactly matching those from the backend screenshots
+  useStructuresFallback(): void {
+    console.log('Using structures fallback data');
+    this.structures = [
+      { label: 'All structures', value: null },
+      { label: 'Ministry of Interior - Civil Status', value: 'ministry-interior' },
+      { label: 'Ministry of Education', value: 'ministry-education' },
+      { label: 'Ministry of Higher Education and Scientific Research', value: 'ministry-higher-education' },
+      { label: 'Ministry of Health', value: 'ministry-health' },
+      { label: 'National Health Insurance Fund (CNAM)', value: 'national-health-insurance' },
+      { label: 'Ministry of Social Affairs', value: 'ministry-social-affairs' },
+      { label: 'Ministry of Transport', value: 'ministry-transport' },
+      { label: 'National Road Safety Authority', value: 'national-road-safety' },
+      { label: 'Ministry of Equipment, Housing, and Infrastructure', value: 'ministry-equipment' },
+      { label: 'Ministry of Finance', value: 'ministry-finance' },
+      { label: 'National Taxation Office', value: 'national-taxation' }
+    ];
+    console.log('Fallback structures:', this.structures);
+  }
+  
+  // Load hierarchical services from backend
+  loadSecteurs(): void {
+    this.serviceManagementService.getServicesHierarchy().pipe(
+      finalize(() => this.secteursLoading = false)
+    ).subscribe({
+      next: (mainServices: Service[]) => {
+        this.mainServices = mainServices;
+        
+        // Also prepare a flat list of all services for existing functionality
+        if (mainServices && mainServices.length > 0) {
+          // First add main services
+          this.services = [
+            { label: 'All services', value: null },
+            ...mainServices.map(service => ({
+              label: service.name,
+              value: service.id
+            }))
+          ];
+          
+          // Then add sub-services with indentation in the label
+          const subServices = mainServices
+            .filter(main => main.children && main.children.length > 0)
+            .flatMap(main => main.children || [])
+            .map(sub => ({
+              label: `└─ ${sub.name}`,
+              value: sub.id
+            }));
+          
+          this.services = [...this.services, ...subServices];
+          
+          console.log(`Loaded ${mainServices.length} main services with sub-services from backend`);
+        } else {
+          this.useServicesFallback();
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading services:', error);
+        this.useServicesFallback();
+      }
+    });
+  }
+  
+  // Use fallback services in case of error
+  useServicesFallback(): void {
+    console.log('Using services fallback data');
+    this.services = [
+      { label: 'All services', value: null },
+      { label: 'Health', value: 'Health' },
+      { label: 'Education', value: 'Education' },
+      { label: 'Civil Status', value: 'Civil Status' },
+      { label: 'Transport', value: 'Transport' },
+      { label: 'Finance', value: 'Finance' },
+      { label: 'Housing', value: 'Housing' },
+      { label: 'Social Affairs', value: 'Social Affairs' }
+    ];
+    
+    // Also create hierarchical structure for service
+    this.mainServices = [
+      {
+        id: 'Health',
+        name: 'Health',
+        children: [
+          { id: 'Health-Hospital', name: 'Hospital Services', children: [] },
+          { id: 'Health-Insurance', name: 'Health Insurance', children: [] }
+        ]
+      },
+      {
+        id: 'Education',
+        name: 'Education',
+        children: [
+          { id: 'Education-Primary', name: 'Primary Education', children: [] },
+          { id: 'Education-Secondary', name: 'Secondary Education', children: [] },
+          { id: 'Education-Higher', name: 'Higher Education', children: [] }
+        ]
+      },
+      {
+        id: 'Civil Status',
+        name: 'Civil Status',
+        children: [
+          { id: 'Civil-Birth', name: 'Birth Registration', children: [] },
+          { id: 'Civil-Marriage', name: 'Marriage Registration', children: [] },
+          { id: 'Civil-Death', name: 'Death Registration', children: [] },
+          { id: 'Civil-ID', name: 'National ID', children: [] }
+        ]
+      }
+    ];
+  }
+  
+  // Filter selection and navigation methods
+  selectFilterType(mode: 'service' | 'structure' | 'mystructure'): void {
+    this.filterMode = mode;
+    
+    if (mode === 'mystructure') {
+      this.selectedFilterValue = this.userStructure;
+      this.selectedFilterLabel = 'My Structure';
+      this.filterStep = 3;
+      this.loadApis(mode, this.selectedFilterValue);
+    } else {
+      this.filterStep = 2;
+    }
+  }
+  
+  selectServiceFilter(serviceId: string | null, serviceLabel: string): void {
+    this.selectedFilterValue = serviceId;
+    this.selectedFilterLabel = serviceLabel;
+    this.filterStep = 3;
+    this.loadApis('service', serviceId);
+  }
+  
+  selectStructureFilter(structureId: string | null, structureLabel: string): void {
+    this.selectedFilterValue = structureId;
+    this.selectedFilterLabel = structureLabel;
+    this.filterStep = 3;
+    this.loadApis('structure', structureId);
+  }
+  
+  selectMainService(service: Service): void {
+    this.selectedMainService = service;
+    
+    if (service.children && service.children.length > 0) {
+      this.serviceFilterStep = 2;
+    } else {
+      this.selectServiceFilter(service.id, service.name);
+    }
+  }
+  
+  selectSubService(service: Service): void {
+    this.selectServiceFilter(service.id, service.name);
+  }
+  
+  backToFilterSelection(): void {
+    this.filterStep = 1;
+    this.filterMode = null;
+    this.selectedFilterValue = null;
+    this.selectedMainService = null;
+    this.serviceFilterStep = 1;
+  }
+  
+  backToMainServiceSelection(): void {
+    this.serviceFilterStep = 1;
+    this.selectedMainService = null;
+  }
+  
+  // Load APIs based on filter
+  loadApis(filterType: 'service' | 'structure' | 'mystructure' | null = null, filterValue: string | null = null): void {
+    this.loading = true;
+    console.log(`Loading APIs for ${filterType}: ${filterValue}`);
+    
+    // Call API service with filter
+    this.apiService.getApis(
+      this.currentPage,
+      this.itemsPerPage,
+      this.searchTerm || null,
+      filterType === 'structure' ? filterValue : null,
+      filterType === 'service' ? filterValue : null
+    ).pipe(
+      finalize(() => {
+        this.loading = false;
+        console.log('API loading completed');
+      })
+    ).subscribe({
+      next: (response: any) => {
+        console.log('APIs response received:', response);
+        
+        if (response && response.content) {
+          this.apis.set(response.content);
+          this.total = response.totalElements || response.content.length;
+          console.log(`Loaded ${this.apis().length} APIs`);          
+          // Check if there are no APIs for this structure
+          this.noApisFound = this.apis().length === 0;
+        } else {
+          console.warn('No APIs returned from backend');
+          this.apis.set([]);
+          this.total = 0;
+          this.noApisFound = true;
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading APIs:', error);
+        this.apis.set([]);
+        this.total = 0;
+        this.noApisFound = true;
+      }
+    });
+  }
+  
+  // Pagination methods
+  prevPage(): void {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.reloadCurrentFilter();
+    }
+  }
+  
+  nextPage(): void {
+    if ((this.currentPage + 1) * this.itemsPerPage < this.total) {
+      this.currentPage++;
+      this.reloadCurrentFilter();
+    }
+  }
+  
+  onItemsPerPageChange(event: any): void {
+    this.itemsPerPage = event.value;
+    this.currentPage = 0; // Reset to first page
+    this.reloadCurrentFilter();
+  }
+  
+  reloadCurrentFilter(): void {
+    if (this.filterMode) {
+      this.loadApis(this.filterMode, this.selectedFilterValue);
+    }
+  }
+  
+  // Global search handler
+  onGlobalSearch(searchValue: string): void {
+    this.searchTerm = searchValue;
+    this.currentPage = 0; // Reset to first page
+    this.reloadCurrentFilter();
+  }
+  
+  // Handle status display for card colors
+  getStatusSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' {
+    if (!status) return 'info';
+    
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case 'active':
+      case 'published':
+      case 'actif':
+        return 'success';
+      case 'pending':
+      case 'draft':
+      case 'en attente':
+      case 'brouillon':
+        return 'warn';
+      case 'beta':
+      case 'test':
+        return 'info';
+      case 'deprecated':
+      case 'inactive':
+      case 'inactif':
+      case 'déprécié':
+        return 'danger';
+      default:
+        return 'info';
+    }
+  }
+}

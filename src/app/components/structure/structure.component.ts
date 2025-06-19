@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
 import { StructureService } from '../../services/structure.service';
 
@@ -21,6 +22,7 @@ import { StructureService } from '../../services/structure.service';
     InputTextModule,
     ConfirmDialogModule,
     SelectModule,
+    TooltipModule,
     CommonModule
   ],
   templateUrl: 'structure.component.html',
@@ -105,7 +107,7 @@ export class StructureListComponent {
 
   deleteStructure(id: string) {
     this.confirmationService.confirm({
-      message: 'Do you want to delete this structure?',
+      message: 'Do you want to delete this organisation?',
       header: 'Confirmation',
       icon: 'pi pi-info-circle',
       rejectLabel: 'Cancel',

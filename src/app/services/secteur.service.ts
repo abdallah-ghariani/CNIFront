@@ -4,7 +4,9 @@ import { environment } from "../../environments/environment";
 import { Secteur } from "../models/secteur";
 import { Page } from "../models/page";
 
-const apiUrl = environment.BACKEND_URL + "secteurs";
+const apiUrl = environment.BACKEND_URL + "api/secteurs";
+// Log the secteur service URL for debugging
+console.log('Secteur service URL:', apiUrl);
 
 @Injectable({
   providedIn: "root",

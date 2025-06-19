@@ -8,9 +8,11 @@ import { catchError, map, Observable, of, shareReplay, switchMap, tap } from "rx
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { Router } from "@angular/router";
 import { JwtToken, User } from "../models/user";
-import { Role } from "../models/roles";
+import { Role, mapLegacyRole } from "../models/roles";
 
-const BACKEND_URL = environment.BACKEND_URL + "auth/";
+const BACKEND_URL = environment.BACKEND_URL + "api/auth/";
+// Log the auth URL for debugging
+console.log('Auth URL:', BACKEND_URL);
 
 @Injectable({
   providedIn: "root",
@@ -23,6 +25,47 @@ export class AuthService {
     private jwt: JwtHelperService,
     private router: Router
   ) {}
+  
+  // Methods to check user roles - updated for new role system
+  // All regular users are both providers and consumers
+  /*isUserProvider(): boolean {
+    let isRegularUser = false;
+    this.getLoggedInUser().subscribe(user => {
+      if (user) {
+        // Support both new 'user' role and legacy roles by using the mapLegacyRole function
+        const mappedRole = typeof user.role === 'string' ? mapLegacyRole(user.role) : user.role;
+        if (mappedRole === Role.user) {
+          isRegularUser = true;
+        }
+      }
+    });
+    return isRegularUser;
+  }
+  
+  isUserConsumer(): boolean {
+    let isRegularUser = false;
+    this.getLoggedInUser().subscribe(user => {
+      if (user) {
+        // Support both new 'user' role and legacy roles by using the mapLegacyRole function
+        const mappedRole = typeof user.role === 'string' ? mapLegacyRole(user.role) : user.role;
+        if (mappedRole === Role.user) {
+          isRegularUser = true;
+        }
+      }
+    });
+    return isRegularUser;
+  }
+  
+  // New helper method - checks if user is authenticated (non-admin)
+  isRegularUser(): boolean {
+    let isUser = false;
+    this.getLoggedInUser().subscribe(user => {
+      if (user && user.role !== Role.admin) {
+        isUser = true;
+      }
+    });
+    return isUser;
+  }*/
 
   login(login: Login) {
     return this.http.post<AuthResponse>(BACKEND_URL + "login", login,{withCredentials:true}).pipe(
@@ -64,10 +107,36 @@ export class AuthService {
           map((response) => response.token),
           tap((token) => (this.accessToken = token)),
           catchError((_) => {
-            this.router.navigate(["login"]);
+            //this.router.navigate(["login"]);
             return of(null);
           })
         );
     return of(this.accessToken);
+  }
+  
+  // Get the role of the currently logged-in user
+  getCurrentUserRole(): Role | undefined {
+    // If we have a token in memory, decode it and return the role
+    if (this.accessToken) {
+      const decodedToken = this.jwt.decodeToken<JwtToken>(this.accessToken);
+      return decodedToken?.role;
+    }
+    return undefined;
+  }
+  
+  // Check if the user is logged in
+  isLoggedIn(): boolean {
+    return !!this.accessToken && !this.jwt.isTokenExpired(this.accessToken);
+  }
+  
+  // Get the username of the currently logged-in user
+  getCurrentUsername(): string | undefined {
+    if (this.accessToken) {
+      const decodedToken = this.jwt.decodeToken<JwtToken>(this.accessToken);
+      return decodedToken?.username || decodedToken?.email || undefined;
+    }
+    
+    // Otherwise, return undefined
+    return undefined;
   }
 }

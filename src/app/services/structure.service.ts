@@ -4,7 +4,9 @@ import { environment } from '../../environments/environment';
 import { Structure } from '../models/structure';
 import { Page } from '../models/page';
 
-const apiUrl = environment.BACKEND_URL + 'structures';
+const apiUrl = environment.BACKEND_URL + 'api/structures';
+// Log the structure service URL for debugging
+console.log('Structure service URL:', apiUrl);
 
 @Injectable({
   providedIn: 'root',

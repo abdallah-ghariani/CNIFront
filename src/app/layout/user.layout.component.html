@@ -1,52 +1,224 @@
-<div class="relative w-full h-screen overflow-hidden font-sans text-gray-800">
-  <header class="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm transition-all duration-300 px-4 py-3">
-    <div class="flex items-center justify-between w-full">
+<div class="relative w-full min-h-screen font-sans text-gray-800">
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300 px-4 lg:px-8 py-2">
+    <div class="container mx-auto flex items-center justify-between">
       <!-- Left: Logo -->
       <div class="flex items-center">
-        <img src="images/CNI.jpg" alt="CNI Logo" class="w-24 sm:w-28" />
+        <a [routerLink]="'user'" class="flex items-center group">
+          <img src="images/CNI.jpg" alt="CNI Logo" class="w-20 sm:w-24 rounded-lg shadow-sm group-hover:shadow transition-all duration-300" />
+        </a>
       </div>
 
       <!-- Center: Navigation -->
-      <nav class="flex gap-x-6 sm:gap-x-10 text-xl sm:text-2xl font-semibold text-blue-900 items-center ml-12 sm:ml-16">
-        <a [routerLink]="'user'" class="hover:underline transition">Accueil</a>
-        <a [routerLink]="'user/apis'" class="hover:underline transition">API</a>
-        <a [routerLink]="'user/docs'" class="hover:underline transition">Documentation</a>
-        <a [routerLink]="'user/support'" class="hover:underline transition">Support</a>
+      <nav class="flex items-center">
+        <ul class="flex items-center space-x-1 md:space-x-2">
+          <li>
+            <a [routerLink]="authService.isLoggedIn() ? ['/welcome'] : ['/']" routerLinkActive="bg-blue-100 text-blue-900" class="px-5 py-4 rounded-md text-blue-900 hover:bg-blue-100 font-semibold text-lg md:text-xl transition-all duration-200 flex items-center">
+              <i class="pi pi-home mr-3 text-xl"></i>
+              <span>Home</span>
+            </a>
+          </li>
+          <li>
+            <a [routerLink]="['/user/apis']" routerLinkActive="bg-blue-100 text-blue-900" class="px-5 py-4 rounded-md text-blue-900 hover:bg-blue-100 font-semibold text-lg md:text-xl transition-all duration-200 flex items-center">
+              <i class="pi pi-list mr-3 text-xl"></i>
+              <span>API</span>
+            </a>
+          </li>
+          <li>
+            <a [routerLink]="['/user/my-api']" routerLinkActive="bg-blue-100 text-blue-900" class="px-5 py-4 rounded-md text-blue-900 hover:bg-blue-100 font-semibold text-lg md:text-xl transition-all duration-200 flex items-center">
+              <i class="pi pi-cog mr-3 text-xl"></i>
+              <span>My API</span>
+            </a>
+          </li>
+          <li>
+            <a [routerLink]="['/user/api-requests']" routerLinkActive="bg-blue-100 text-blue-900" class="px-5 py-4 rounded-md text-blue-900 hover:bg-blue-100 font-semibold text-lg md:text-xl transition-all duration-200 flex items-center">
+              <i class="pi pi-send mr-3 text-xl"></i>
+              <span>API Request</span>
+            </a>
+          </li>
+        </ul>
       </nav>
 
-      <!-- Right: Login + Search -->
-      <div class="flex flex-col items-end gap-2">
-        <!-- Login Button -->
-        <p-menu #menu [model]="menuItems" [popup]="true"></p-menu>
-        <button  
-          (click)="menu.toggle($event)" 
-          class="w-10 h-10 flex items-center justify-center rounded-full bg-button-color hover:bg-primary-400 focus:outline-none">
-          <i class="pi pi-user text-base"></i>
-        </button>
-
-        <!-- Search Bar -->
-        <p-iconfield class="w-80">
-          <p-inputicon styleClass="pi pi-search" />
-          <input type="text" pInputText placeholder="Search" class="w-full px-2 py-2 text-lg" />
-        </p-iconfield>
+      <!-- Right: User Profile/Login -->
+      <div class="flex items-center">
+        <!-- Show profile menu when logged in -->
+        <ng-container *ngIf="authService.isLoggedIn()">
+          <p-menu #menu [model]="menuItems" [popup]="true"></p-menu>
+          <button  
+            (click)="menu.toggle($event)" 
+            class="flex items-center justify-center bg-white text-blue-900 hover:bg-blue-50 focus:outline-none rounded-full p-3 transition-all duration-200 border border-gray-200 shadow-sm">
+            <i class="pi pi-user text-xl"></i>
+            <span class="ml-2 font-medium">{{ authService.getCurrentUsername() || 'User' }}</span>
+          </button>
+        </ng-container>
+        
+        <!-- Show login button when not logged in -->
+        <ng-container *ngIf="!authService.isLoggedIn()">
+          <button 
+            [routerLink]="'/login'" 
+            class="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white focus:outline-none rounded-lg px-4 py-2 transition-all duration-200 shadow-sm">
+            <i class="pi pi-sign-in text-sm mr-2"></i>
+            <span class="font-medium">Login</span>
+          </button>
+        </ng-container>
       </div>
     </div>
   </header>
 
-  <!-- Content Spacer -->
-  <div class="pt-40">
-    <!-- Background Video Section -->
-    <div class="relative">
+  <!-- Content with appropriate spacing to clear the header -->
+  <div class="pt-20">
+    <!-- Background Video Section - Only shown on home page for non-authenticated users -->
+    <div class="relative" *ngIf="router.url === '/' && !authService.isLoggedIn()">
       <div class="absolute inset-0 bg-white opacity-95 z-20"></div>
       <video autoplay muted loop preload="auto" class="w-full h-full object-cover z-0">
         <source src="video/bg-video.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      <h1 class="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-900 text-5xl sm:text-6xl font-bold z-30 text-center">
-        Welcome to<br />the first Tunisian's<br />Government portal
-      </h1>
+      <div class="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 text-center max-w-4xl w-full px-4">
+        <h1 class="mb-4">
+          <span class="block text-blue-600 text-3xl mb-2 font-light animate__animated animate__fadeIn">Welcome to</span>
+          <span class="block text-blue-900 text-5xl sm:text-6xl font-extrabold mb-3 animate__animated animate__fadeIn animate__delay-1s">The First Tunisian</span>
+          <span class="block bg-gradient-to-r from-blue-700 to-blue-900 text-transparent bg-clip-text text-5xl sm:text-7xl font-black animate__animated animate__fadeIn animate__delay-2s">Government Portal</span>
+        </h1>
+        <p class="text-gray-600 text-xl mt-6 max-w-2xl mx-auto animate__animated animate__fadeIn animate__delay-3s">Connecting citizens, businesses and government through simplified digital services</p>
+      </div>
     </div>
+  </div>
+
+  <!-- Bottom Section with Membership Button - Only shown on home page for non-authenticated users -->
+  <div *ngIf="router.url === '/' && !displayAdherationSection && !authService.isLoggedIn()" class="py-16 px-8 bg-gray-100 text-center">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold text-blue-900 mb-6">Join Our Network</h2>
+      <p class="text-gray-700 mb-8 text-lg">
+        Request membership to gain access to our powerful APIs and services. 
+        Join government organizations already benefiting from our platform.
+      </p>
+      <button 
+        pButton 
+        type="button" 
+        label="Request Membership" 
+        icon="pi pi-plus"
+        class="p-button-lg p-button-raised" 
+        style="background-color: #1a365d; font-size: 1.25rem; padding: 1rem 2rem;"
+        (click)="showAdherationSection()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Membership Request Form Section - appears below the welcome section when button is clicked -->
+  <div id="adherationFormSection" *ngIf="displayAdherationSection" class="py-16 px-8 bg-gray-50">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center">Request Membership</h2>
+      
+      <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="mb-6">
+          <p class="text-gray-600 mb-4">
+            Fill out the form below to request membership to our platform. We'll review your request and get back to you as soon as possible.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="field">
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+            <input 
+              id="name" 
+              type="text" 
+              pInputText 
+              [(ngModel)]="adherationForm.name" 
+              [disabled]="isSubmitting"
+              class="w-full" 
+              placeholder="Enter your full name">
+          </div>
+          
+          <div class="field">
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+            <input 
+              id="email" 
+              type="email" 
+              pInputText 
+              [(ngModel)]="adherationForm.email" 
+              [disabled]="isSubmitting"
+              class="w-full" 
+              placeholder="Enter your email address">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div class="field">
+            <label for="structure" class="block text-sm font-medium text-gray-700 mb-1">Structure *</label>
+            <p-dropdown 
+              id="structure" 
+              [options]="structures" 
+              [(ngModel)]="adherationForm.structure" 
+              placeholder="Select your organization" 
+              [filter]="true" 
+              filterBy="label"
+              [showClear]="true"
+              [disabled]="isSubmitting"
+              styleClass="w-full">
+            </p-dropdown>
+          </div>
+          
+          <div class="field">
+            <label for="secteur" class="block text-sm font-medium text-gray-700 mb-1">Sector *</label>
+            <p-dropdown 
+              id="secteur" 
+              [options]="secteurs" 
+              [(ngModel)]="adherationForm.secteur" 
+              placeholder="Select your sector" 
+              [filter]="true" 
+              filterBy="label"
+              [showClear]="true"
+              [disabled]="isSubmitting"
+              styleClass="w-full">
+            </p-dropdown>
+          </div>
+        </div>
+        
+        <!-- Note: Role selection removed, now using 'user' as the standard role -->
+        
+        <div class="field mb-6">
+          <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message (Optional)</label>
+          <textarea 
+            id="message" 
+            pInputTextarea 
+            [(ngModel)]="adherationForm.message" 
+            [disabled]="isSubmitting"
+            rows="5" 
+            class="w-full" 
+            placeholder="Enter any additional information or requests"></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-3">
+          <button 
+            pButton 
+            type="button" 
+            label="Cancel" 
+            icon="pi pi-times" 
+            class="p-button-text"
+            [disabled]="isSubmitting"
+            (click)="displayAdherationSection = false">
+          </button>
+          <button 
+            pButton 
+            type="button" 
+            label="Submit" 
+            icon="pi pi-check" 
+            class="p-button-primary"
+            [loading]="isSubmitting"
+            (click)="submitAdherationRequest()">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add router-outlet to render child routes -->
+  <div class="content-area">
+    <router-outlet></router-outlet>
   </div>
 
   <div style="height: 1600px;"></div>
 </div>
+
+<!-- Toast for notifications -->
+<p-toast></p-toast>

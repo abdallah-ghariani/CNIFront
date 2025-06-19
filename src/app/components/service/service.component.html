@@ -1,0 +1,112 @@
+<div class="p-4 bg-gray-50 min-h-screen">
+  <p-confirmDialog></p-confirmDialog>
+  <!-- Page Header -->
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">Services Management</h1>
+    <button
+      pButton
+      label="Add Service"
+      icon="pi pi-plus"
+      class="p-button-primary"
+      (click)="showAddDialog()"
+    ></button>
+  </div>  
+  <div class="card">
+
+      <p-table 
+        [value]="services()" 
+        [lazy]="true" 
+        (onLazyLoad)="loadServices($event)" 
+        [paginator]="true" 
+        [rows]="10" 
+        [totalRecords]="total" 
+        [loading]="loading"
+        [rowsPerPageOptions]="[5, 10, 25, 50]"
+        styleClass="p-datatable-sm p-datatable-gridlines"
+        [tableStyle]="{'min-width': '50rem'}"
+        responsiveLayout="scroll">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:10%" class="text-center">#</th>
+            <th style="width:65%">Service Name</th>
+            <th style="width:25%" class="text-center">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-service let-i="rowIndex">
+          <tr>
+            <td class="text-center">{{i + 1}}</td>
+            <td class="font-medium">{{service.name}}</td>
+            <td class="text-center">
+              <div class="flex gap-2 justify-center">
+                <button
+                  pButton
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-info"
+                  (click)="showEditDialog(service)"
+                  pTooltip="Edit Service"
+                  tooltipPosition="top"
+                ></button>
+                <button
+                  pButton
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  (click)="confirmDelete(service)"
+                  pTooltip="Delete Service"
+                  tooltipPosition="top"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center p-4">
+              <div class="text-xl text-primary-500 font-semibold mb-2">No services found</div>
+              <div class="text-sm text-500">Add a new service to get started.</div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+  </div>
+</div>
+
+<!-- Add Service Dialog -->
+<p-dialog [(visible)]="displayAddDialog" header="Add New Service" [style]="{width: '400px'}" [modal]="true" [draggable]="false" [resizable]="false">
+  <div class="field mt-3">
+    <label for="name" class="font-medium mb-2 block">Service Name *</label>
+    <input type="text" pInputText id="name" [(ngModel)]="newService.name" required autofocus class="w-full" placeholder="Enter service name" />
+    @if(errorMessage && !newService.name) {
+      <small class="p-error block mt-1">Service name is required</small>
+    }
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end gap-2">
+      <button pButton label="Cancel" icon="pi pi-times" (click)="displayAddDialog=false" class="p-button-outlined"></button>
+      <button pButton label="Save" icon="pi pi-check" (click)="addService()" class="p-button-primary"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Edit Service Dialog -->
+<p-dialog [(visible)]="displayEditDialog" header="Edit Service" [style]="{width: '400px'}" [modal]="true" [draggable]="false" [resizable]="false">
+  <div class="field mt-3">
+    <label for="editName" class="font-medium mb-2 block">Service Name *</label>
+    <input type="text" pInputText id="editName" [(ngModel)]="selectedService.name" required autofocus class="w-full" placeholder="Enter service name" />
+    @if(errorMessage && !selectedService.name) {
+      <small class="p-error block mt-1">Service name is required</small>
+    }
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end gap-2">
+      <button pButton label="Cancel" icon="pi pi-times" (click)="displayEditDialog=false" class="p-button-outlined"></button>
+      <button pButton label="Save" icon="pi pi-check" (click)="updateService()" class="p-button-primary"></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+

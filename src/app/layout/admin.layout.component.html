@@ -1,7 +1,7 @@
 <div class="flex h-screen">
     <div 
       [ngClass]="{'w-64': sidebarOpen, 'w-16': !sidebarOpen}"
-      class="bg-primary-600 text-white flex flex-col transition-all duration-300"
+      class="bg-primary-600 text-white flex flex-col transition-all duration-300 fixed h-full z-10"
     >
       <div class="p-4 flex items-center justify-between">
         <span class="text-lg font-bold" *ngIf="sidebarOpen">CNI</span>
@@ -21,22 +21,27 @@
     </div>
   
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col main-content-transition" [ngClass]="{'ml-64': sidebarOpen, 'ml-16': !sidebarOpen}">
       <!-- Top Navbar -->
-      <div class="bg-primary-500 text-black p-4 flex justify-between items-center">
-        <span class="text-lg font-semibold">{{ pageTitle }}</span>
-        <div>
+      <div class="bg-primary-500 text-white p-4 flex justify-between items-center">
+        <div class="flex items-center">
+          <a [routerLink]="['/admin']" class="flex items-center cursor-pointer hover:opacity-90 transition-opacity">
+            <h1 class="text-2xl font-bold">Admin Interface</h1>
+          </a>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button pButton pRipple icon="pi pi-bell" class="p-button-rounded p-button-text p-button-plain text-white"></button>
           <p-menu #menu [model]="menuItems" [popup]="true"></p-menu>
-          <button 
-            (click)="menu.toggle($event)" 
-            class="w-10 h-10 flex items-center justify-center rounded-full bg-button-color hover:bg-primary-400"
-          >
-            <i class="pi pi-user"></i>
-          </button>
+          <a (click)="toggleUserMenu($event)" class="flex items-center space-x-2 bg-primary-600 px-4 py-2 rounded-full cursor-pointer hover:bg-primary-700 transition-colors">
+            <i class="pi pi-user text-white"></i>
+            <span class="font-medium text-white">Admin</span>
+          </a>
         </div>
       </div>
   
       <!-- Content Area -->
+
+
       <div class="p-4 flex-1 bg-gray-200">
         <router-outlet></router-outlet>
       </div>

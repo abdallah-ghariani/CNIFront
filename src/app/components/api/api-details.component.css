@@ -1,0 +1,71 @@
+/* API Documentation Styles */
+.api-documentation {
+  font-family: var(--font-family);
+}
+
+/* Method badges */
+.method-badge {
+  display: inline-block;
+  color: white;
+  font-weight: 600;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  min-width: 46px;
+  text-align: center;
+}
+
+/* Endpoint list item hover */
+.endpoint-item:hover {
+  background-color: var(--surface-100);
+}
+
+/* Tables */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background-color: var(--surface-50);
+  color: var(--text-color-secondary);
+  font-weight: 600;
+  padding: 0.75rem;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--surface-200);
+}
+
+/* Response formatting */
+.response-container pre {
+  margin: 0;
+}
+
+/* Tab view styling */
+:host ::ng-deep .p-tabview .p-tabview-nav {
+  border-bottom: 2px solid var(--surface-200);
+}
+
+:host ::ng-deep .p-tabview .p-tabview-nav li .p-tabview-nav-link {
+  border: none;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  transition: all 0.2s;
+}
+
+:host ::ng-deep .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+:host ::ng-deep .p-tabview .p-tabview-panels {
+  padding: 1.5rem 0;
+  background-color: transparent;
+}
+
+/* Explorer styles */
+.explorer-section {
+  background-color: var(--surface-card);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+}

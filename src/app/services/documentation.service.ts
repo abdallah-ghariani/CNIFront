@@ -13,6 +13,8 @@ export class DocumentationService {
   download(id: string) {
     return this.http.get(BACKEND_URL + "/download/" + id, { responseType: 'blob' });
   }
+
+  
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<Documentation[]> {

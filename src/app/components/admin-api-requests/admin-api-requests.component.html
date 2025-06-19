@@ -1,0 +1,332 @@
+<div class="p-4 admin-requests-container">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+  
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="title-container">
+      <h1 class="page-title">API Creation Requests</h1>
+      <p class="page-subtitle">Review and manage new API creation requests from departments</p>
+    </div>
+  </div>
+  
+  <!-- Stats Cards -->
+  <div class="stats-container">
+    <div class="stat-card total-requests">
+      <div class="stat-icon">
+        <i class="pi pi-list"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{stats.totalRequests}}</div>
+        <div class="stat-label">Total Requests</div>
+      </div>
+    </div>
+    
+    <div class="stat-card pending-requests">
+      <div class="stat-icon">
+        <i class="pi pi-clock"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{stats.pendingRequests}}</div>
+        <div class="stat-label">Pending Approval</div>
+      </div>
+    </div>
+    
+    <div class="stat-card approved-requests">
+      <div class="stat-icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{stats.approvedRequests}}</div>
+        <div class="stat-label">Approved</div>
+      </div>
+    </div>
+    
+    <div class="stat-card rejected-requests">
+      <div class="stat-icon">
+        <i class="pi pi-times-circle"></i>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{stats.rejectedRequests}}</div>
+        <div class="stat-label">Rejected</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Content Area -->
+  <div class="content-container">
+    <div class="filter-section">
+      <div class="left-controls">
+        <button pButton pRipple icon="pi pi-refresh" class="p-button-rounded p-button-text" 
+                pTooltip="Refresh Data" tooltipPosition="bottom" (click)="loadUserApiRequests()"></button>
+        
+        <div class="view-toggle">
+          <button pButton pRipple icon="pi pi-th-large" class="p-button-rounded p-button-text" 
+                  [class.active-view]="layoutView === 'grid'" 
+                  pTooltip="Grid View" tooltipPosition="bottom"
+                  (click)="toggleView('grid')"></button>
+          <button pButton pRipple icon="pi pi-table" class="p-button-rounded p-button-text" 
+                  [class.active-view]="layoutView === 'table'" 
+                  pTooltip="Table View" tooltipPosition="bottom"
+                  (click)="toggleView('table')"></button>
+        </div>
+      </div>
+      
+      <div class="filter-controls">
+        <p-multiSelect [options]="statusOptions" [(ngModel)]="selectedStatuses" 
+                      placeholder="Filter by Status" [maxSelectedLabels]="2"
+                      (onChange)="applyFilters()" styleClass="status-filter">
+          <ng-template let-value pTemplate="selectedItems">
+            <div class="flex align-items-center gap-1" *ngIf="value && value.length > 0">
+              <span>{{value.length}} status{{value.length > 1 ? 'es' : ''}} selected</span>
+            </div>
+            <div *ngIf="!value || value.length === 0">All Statuses</div>
+          </ng-template>
+        </p-multiSelect>
+        
+        <p-multiSelect [options]="sectorOptions" [(ngModel)]="selectedSectors" 
+                      placeholder="Filter by Sector" [maxSelectedLabels]="1"
+                      (onChange)="applyFilters()" styleClass="sector-filter">
+          <ng-template let-value pTemplate="selectedItems">
+            <div class="flex align-items-center gap-1" *ngIf="value && value.length > 0">
+              <span>{{value.length}} sector{{value.length > 1 ? 's' : ''}} selected</span>
+            </div>
+            <div *ngIf="!value || value.length === 0">All Sectors</div>
+          </ng-template>
+        </p-multiSelect>
+        
+        <span class="p-input-icon-left search-box">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" [(ngModel)]="globalFilter" placeholder="Search..." (input)="onGlobalFilter($event)" />
+        </span>
+        
+        <button pButton pRipple icon="pi pi-filter-slash" class="p-button-rounded p-button-text" 
+                pTooltip="Reset Filters" tooltipPosition="bottom"
+                (click)="resetFilters()"></button>
+      </div>
+    </div>
+    
+    <!-- Removed Analytics Dashboard Section -->
+    
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="loading-container">
+      <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="8" fill="var(--surface-ground)" animationDuration=".5s"></p-progressSpinner>
+      <span>Loading requests...</span>
+    </div>
+    
+    <!-- Grid View -->
+    <div *ngIf="!loading && layoutView === 'grid'" class="requests-grid">
+      <div *ngFor="let request of filteredRequests" class="request-card">
+        <div class="request-header">
+          <div class="api-name-container">
+            <h3 class="api-name">{{ request.apiName || 'Unnamed API' }}</h3>
+            <p-tag 
+              [value]="request.status" 
+              [severity]="request.status === 'approved' ? 'success' : (request.status === 'rejected' ? 'danger' : 'warn')">
+            </p-tag>
+          </div>
+          <div class="date-info">
+            {{ request.requestDate | date:'MMM d, y' }}
+          </div>
+        </div>
+        
+        <div class="request-body">
+          <div class="requester-info">
+            <p-avatar icon="pi pi-user" shape="circle" [style]="{'background-color': '#E9ECEF'}"></p-avatar>
+            <div class="requester-details">
+              <div class="requester-name">{{ request.name }}</div>
+              <div class="requester-email">{{ request.email }}</div>
+            </div>
+          </div>
+          
+          <p-divider></p-divider>
+          
+          <div class="request-metadata">
+            <p-chip label="{{ request.structure || 'Unknown Structure' }}" icon="pi pi-building" styleClass="sector-chip"></p-chip>
+            <p-chip label="{{ request.secteur || 'Unknown Sector' }}" icon="pi pi-sitemap" styleClass="sector-chip"></p-chip>
+          </div>
+          
+          <div class="request-message">
+            <p class="message-text">{{ (request.message || 'No description provided') | slice:0:150 }}{{ (request.message && request.message.length > 150) ? '...' : '' }}</p>
+          </div>
+        </div>
+        
+        <div class="request-actions">
+          <button pButton pRipple label="View Details" icon="pi pi-eye" class="p-button-outlined p-button-sm" (click)="showDetails(request)"></button>
+          <div class="action-buttons" *ngIf="request.status === 'pending'">
+            <button pButton pRipple icon="pi pi-check" class="p-button-rounded p-button-success p-button-sm" 
+                    pTooltip="Approve Request" tooltipPosition="top"
+                    (click)="handleApiRequestAction(request, 'approve')"></button>
+            <button pButton pRipple icon="pi pi-times" class="p-button-rounded p-button-danger p-button-sm" 
+                    pTooltip="Reject Request" tooltipPosition="top"
+                    (click)="handleApiRequestAction(request, 'reject')"></button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Empty state for grid view -->
+      <div *ngIf="filteredRequests.length === 0" class="empty-state">
+        <div class="empty-state-content">
+          <i class="pi pi-inbox empty-icon"></i>
+          <h3>No API Requests Found</h3>
+          <p>There are no API creation requests matching your criteria.</p>
+          <button pButton pRipple label="Reset Filters" icon="pi pi-filter-slash" class="p-button-outlined" (click)="resetFilters()"></button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Table View -->
+    <div *ngIf="!loading && layoutView === 'table'" class="table-container">
+      <p-table 
+        [value]="filteredRequests" 
+        [tableStyle]="{'min-width': '75rem'}"
+        styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped"
+        [paginator]="true" 
+        [rows]="8" 
+        [rowsPerPageOptions]="[8, 16, 24]"
+        [sortField]="sortField"
+        [sortOrder]="sortOrder"
+        dataKey="id"
+        responsiveLayout="scroll">
+        
+        <!-- Table Header -->
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="apiName" style="width: 20%">API Name <p-sortIcon field="apiName"></p-sortIcon></th>
+            <th pSortableColumn="name" style="width: 15%">Requestor <p-sortIcon field="name"></p-sortIcon></th>
+            <th pSortableColumn="structure" style="width: 15%">Structure <p-sortIcon field="structure"></p-sortIcon></th>
+            <th pSortableColumn="secteur" style="width: 15%">Sector <p-sortIcon field="secteur"></p-sortIcon></th>
+            <th pSortableColumn="requestDate" style="width: 12%">Date <p-sortIcon field="requestDate"></p-sortIcon></th>
+            <th pSortableColumn="status" style="width: 10%">Status <p-sortIcon field="status"></p-sortIcon></th>
+            <th style="width: 13%">Actions</th>
+          </tr>
+        </ng-template>
+        
+        <!-- Table Body -->
+        <ng-template pTemplate="body" let-request>
+          <tr>
+            <td>
+              <div class="api-name-cell">
+                <span class="api-name-text">{{ request.apiName || 'Not specified' }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="requester-cell">
+                <div class="requester-name">{{ request.name }}</div>
+                <div class="requester-email">{{ request.email }}</div>
+              </div>
+            </td>
+            <td>{{ request.structure || 'Not specified' }}</td>
+            <td>
+              <div class="sector-cell">
+                <span class="sector-dot" [style.background-color]="getSectorColor(request.secteur)"></span>
+                <span>{{ request.secteur || 'Not specified' }}</span>
+              </div>
+            </td>
+            <td>{{ request.requestDate | date:'MMM d, y' }}</td>
+            <td>
+              <p-tag 
+                [value]="request.status" 
+                [severity]="request.status === 'approved' ? 'success' : (request.status === 'rejected' ? 'danger' : 'warn')">
+              </p-tag>
+            </td>
+            <td>
+              <div class="action-cell">
+                <button pButton pRipple icon="pi pi-eye" class="p-button-rounded p-button-text p-button-sm" 
+                        pTooltip="View Details" (click)="showDetails(request)"></button>
+                
+                <button *ngIf="request.status === 'pending'" pButton pRipple icon="pi pi-check" 
+                        class="p-button-rounded p-button-success p-button-sm" 
+                        pTooltip="Approve Request"
+                        (click)="handleApiRequestAction(request, 'approve')"></button>
+                        
+                <button *ngIf="request.status === 'pending'" pButton pRipple icon="pi pi-times" 
+                        class="p-button-rounded p-button-danger p-button-sm" 
+                        pTooltip="Reject Request"
+                        (click)="handleApiRequestAction(request, 'reject')"></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <!-- No Records Template -->
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center p-5">
+              <div class="empty-table-state">
+                <i class="pi pi-inbox empty-table-icon"></i>
+                <div class="empty-table-message">No API creation requests match your filters</div>
+                <button pButton pRipple label="Reset Filters" icon="pi pi-filter-slash" class="p-button-outlined p-button-sm" (click)="resetFilters()"></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+  
+  <!-- Request Details Dialog -->
+  <p-dialog [(visible)]="showRequestDetails" [style]="{width: '50vw'}" 
+            [modal]="true" [resizable]="false" [draggable]="false"
+            header="API Request Details" [closeOnEscape]="true" [dismissableMask]="true">
+    <div *ngIf="selectedRequest" class="request-details">
+      <div class="details-header">
+        <h2 class="details-title">{{ selectedRequest.apiName }}</h2>
+        <p-tag 
+          [value]="selectedRequest.status" 
+          [severity]="selectedRequest.status === 'approved' ? 'success' : (selectedRequest.status === 'rejected' ? 'danger' : 'warn')">
+        </p-tag>
+      </div>
+      
+      <div class="details-section">
+        <h3 class="section-title">Requester Information</h3>
+        <div class="detail-row">
+          <div class="detail-label">Name:</div>
+          <div class="detail-value">{{ selectedRequest.name }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Email:</div>
+          <div class="detail-value">{{ selectedRequest.email }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Date:</div>
+          <div class="detail-value">{{ selectedRequest.requestDate | date:'medium' }}</div>
+        </div>
+      </div>
+      
+      <div class="details-section">
+        <h3 class="section-title">Organization Details</h3>
+        <div class="detail-row">
+          <div class="detail-label">Structure:</div>
+          <div class="detail-value">{{ selectedRequest.structure }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Sector:</div>
+          <div class="detail-value">
+            <span class="sector-dot" [style.background-color]="getSectorColor(selectedRequest.secteur)"></span>
+            {{ selectedRequest.secteur }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="details-section">
+        <h3 class="section-title">API Information</h3>
+        <div class="detail-row">
+          <div class="detail-label">API Name:</div>
+          <div class="detail-value">{{ selectedRequest.apiName }}</div>
+        </div>
+        <div class="detail-row full-width">
+          <div class="detail-label">Description:</div>
+          <div class="detail-value message-box">{{ selectedRequest.message }}</div>
+        </div>
+      </div>
+      
+      <div class="actions-section" *ngIf="selectedRequest.status === 'pending'">
+        <button pButton pRipple label="Approve Request" icon="pi pi-check-circle" 
+                class="p-button-success" (click)="handleApiRequestAction(selectedRequest, 'approve'); showRequestDetails = false;"></button>
+        <button pButton pRipple label="Reject Request" icon="pi pi-times-circle" 
+                class="p-button-danger" (click)="handleApiRequestAction(selectedRequest, 'reject'); showRequestDetails = false;"></button>
+      </div>
+    </div>
+  </p-dialog>
+</div>

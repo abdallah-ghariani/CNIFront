@@ -1,0 +1,71 @@
+<div class="welcome-container">
+  <div class="welcome-content">
+    <!-- Animated Greeting Card -->
+    <div class="greeting-card">
+      <div class="greeting-header">
+        <h1 class="welcome-title">{{ greeting }}, <span class="user-name">{{ userName }}</span></h1>
+        <p class="welcome-subtitle">Welcome to the CNI Platform</p>
+      </div>
+      
+      <div class="welcome-message">
+        <p>We're glad to have you here. The Centre National d'Informatique platform helps you discover, access, and manage government APIs and services.</p>
+      </div>
+      
+      <!-- Quick Actions Section -->
+      <div class="quick-actions">
+        <h2>What would you like to do today?</h2>
+        
+        <div class="action-cards">
+          <!-- API Explorer Card (shown to all users) -->
+          <div class="action-card full-width">
+            <div class="card-icon api-icon large-icon">
+              <i class="pi pi-search"></i>
+            </div>
+            <div class="card-content large-content">
+              <h2>Browse APIs</h2>
+              <p class="large-text">Explore available APIs across different government sectors</p>
+              <button pButton pRipple type="button" label="Explore APIs" 
+                      class="p-button-primary p-button-lg" (click)="navigateToApis()"></button>
+            </div>
+          </div>
+          
+          <!-- Login Card (only shown to non-logged-in users) -->
+          <div *ngIf="!userRole" class="action-card full-width mt-3">
+            <div class="card-icon api-icon large-icon">
+              <i class="pi pi-sign-in"></i>
+            </div>
+            <div class="card-content large-content">
+              <h2>Sign In</h2>
+              <p class="large-text">Log in to access your dashboard and manage API requests</p>
+              <button pButton pRipple type="button" label="Sign In" 
+                      class="p-button-success p-button-lg" [routerLink]="['/login']"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Activity Section -->
+      <div class="recent-activity">
+        <div class="activity-header">
+          <h2>Platform News</h2>
+        </div>
+        <div class="activity-content">
+          <ul class="activity-list">
+            <li class="activity-item">
+              <i class="pi pi-check-circle"></i>
+              <span>New Health sector APIs are now available</span>
+            </li>
+            <li class="activity-item">
+              <i class="pi pi-info-circle"></i>
+              <span>Platform maintenance scheduled for next weekend</span>
+            </li>
+            <li class="activity-item">
+              <i class="pi pi-star"></i>
+              <span>Improved API request approval process now active</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,137 @@
+<div class="card">
+  <div class="container mx-auto p-5 bg-gray-50 min-h-screen">
+    <!-- Back button -->
+    <div class="pt-6 pb-2 px-6 max-w-6xl mx-auto">
+      <a routerLink="/user/dashboard" class="inline-flex items-center justify-center rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-blue-50 transition-colors">
+        <i class="pi pi-arrow-left mr-2"></i>
+        Back
+      </a>
+    </div>
+
+    <!-- Header Section -->
+    <div class="pt-4 pb-6 px-6 max-w-6xl mx-auto">
+      <h1 class="text-3xl font-bold text-blue-900 text-center mt-6 mb-8">API Access Requests</h1>
+      <p class="text-gray-600 text-center mb-10 max-w-3xl mx-auto">
+        Manage API access requests and view external APIs you have access to.
+      </p>
+    </div>
+    
+    <p-toast></p-toast>
+    <p-confirmDialog header="Confirmation" icon="pi pi-exclamation-triangle"></p-confirmDialog>
+    
+    <!-- Content Container -->
+    <div class="max-w-6xl mx-auto px-6">
+    
+    <!-- Pending Requests Section -->
+    <div class="bg-white rounded-lg shadow-sm mb-8 p-6">
+      <h2 class="text-xl font-semibold text-blue-800 mb-2">Incoming Requests</h2>
+      <p class="text-gray-600 mb-4">Manage API access requests from consumers. You can approve or reject requests for your APIs.</p>
+    
+    <p-table 
+      [value]="requests || []" 
+      [loading]="loading"
+      [paginator]="true" 
+      [rows]="rows"
+      [totalRecords]="totalRecords"
+      [first]="first"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      (onPage)="onPageChange($event)"
+      [lazy]="true"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+      [scrollable]="true"
+      responsiveLayout="scroll">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>API</th>
+          <th>Consumer</th>
+          <th>Request Date</th>
+          <th>Status</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-request>
+        <tr>
+          <td>
+            <a [routerLink]="['/api/detail', request.apiId]" class="text-blue-600 hover:underline">
+              {{ request.apiName || request.apiId }}
+            </a>
+          </td>
+          <td>{{ request.name }}<br><span class="text-xs text-gray-600">({{ request.email }})</span></td>
+          <td>{{ request.requestDate | date:'MMM d, yyyy, HH:mm' }}</td>
+          <td>
+            <span *ngIf="request.status === 'PENDING' || request.status === 'pending'" class="p-tag p-tag-warning">Pending</span>
+            <span *ngIf="request.status === 'APPROVED' || request.status === 'approved'" class="p-tag p-tag-success">Approved</span>
+            <span *ngIf="request.status === 'REJECTED' || request.status === 'rejected'" class="p-tag p-tag-danger">Rejected</span>
+          </td>
+          <td>{{ request.message || 'Access request for newly created API' }}</td>
+          <td>
+            <button *ngIf="request.status === 'PENDING' || request.status === 'pending'" pButton pRipple icon="pi pi-check" class="p-button-rounded p-button-outlined p-button-success mr-2" 
+              [title]="'Approve Request'" 
+              (click)="confirmApproval(request)"></button>
+            <button *ngIf="request.status === 'PENDING' || request.status === 'pending'" pButton pRipple icon="pi pi-times" class="p-button-rounded p-button-outlined p-button-danger" 
+              [title]="'Reject Request'"
+              (click)="confirmRejection(request)"></button>
+            <span *ngIf="request.status !== 'PENDING' && request.status !== 'pending'" class="p-tag p-tag-info">{{ request.status }}</span>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="text-center p-4 text-blue-600">No pending API access requests.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    
+    <!-- Approved APIs Section -->
+    <div class="bg-white rounded-lg shadow-sm mb-8 p-6">
+      <h2 class="text-xl font-semibold text-blue-800 mb-2">External APIs You Can Use</h2>
+      <p class="text-gray-600 mb-4">APIs from other sectors that you have been granted access to</p>
+    
+    <p-table 
+      [value]="approvedApis" 
+      [loading]="loadingApproved"
+      styleClass="p-datatable-sm p-datatable-striped"
+      [paginator]="true" 
+      [rows]="10" 
+      [rowsPerPageOptions]="[5, 10, 25]"
+      responsiveLayout="scroll">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>API</th>
+          <th>Structure</th>
+          <th>Sector</th>
+          <th>Approved Date</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-api>
+        <tr>
+          <td class="font-medium text-blue-700">{{ api.apiName || api.apiId }}</td>
+          <td>{{ api.structure || 'Not specified' }}</td>
+          <td>{{ api.secteur || 'Not specified' }}</td>
+          <td>{{ (api.approvalDate || api.requestDate) | date:'M/d/yy, h:mm a' }}</td>
+          <td>
+            <button pButton pRipple icon="pi pi-external-link" class="p-button-rounded p-button-text p-button-info" 
+              [title]="'View API Details'" 
+              (click)="viewApiDetails(api)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="text-center p-4 text-blue-600">You don't have access to any external APIs.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    </div>
+  </div>
+</div>

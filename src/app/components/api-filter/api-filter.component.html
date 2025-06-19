@@ -1,0 +1,307 @@
+<div class="container mx-auto p-5 bg-gray-50 min-h-screen">
+  <!-- Filter Selection Steps (Step 1) -->
+  <div *ngIf="filterStep === 1" class="pt-16 pb-6 px-6 max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold text-blue-900 text-center mt-6 mb-8">API Explorer</h1>
+    <p class="text-gray-600 text-center mb-10 max-w-3xl mx-auto">Select a search method to find the APIs you're looking for.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- By Service Option -->
+      <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02]" 
+           (click)="selectFilterType('service')">
+        <div class="bg-blue-50 p-4 flex justify-center">
+          <span class="text-6xl text-blue-700"><i class="pi pi-cog"></i></span>
+        </div>
+        <div class="p-6 text-center">
+          <h3 class="text-2xl font-semibold mb-3 text-blue-900">By Service</h3>
+          <p class="text-gray-600">Browse APIs grouped by service category</p>
+          <button pButton 
+                  type="button" 
+                  label="Select" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right"
+                  class="mt-4 p-button-rounded p-button-outlined">
+          </button>
+        </div>
+      </div>
+      
+      <!-- By Structure Option -->
+      <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02]" 
+           (click)="selectFilterType('structure')">
+        <div class="bg-green-50 p-4 flex justify-center">
+          <span class="text-6xl text-green-700"><i class="pi pi-sitemap"></i></span>
+        </div>
+        <div class="p-6 text-center">
+          <h3 class="text-2xl font-semibold mb-3 text-blue-900">By Structure</h3>
+          <p class="text-gray-600">Browse APIs by organization or government structure</p>
+          <button pButton 
+                  type="button" 
+                  label="Select" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right"
+                  class="mt-4 p-button-rounded p-button-outlined">          
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Service Selection (Step 2 for Service) - Main Service Selection -->
+  <div *ngIf="filterStep === 2 && filterMode === 'service' && serviceFilterStep === 1" class="p-6 max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <button pButton type="button" icon="pi pi-arrow-left" label="Back" 
+              class="p-button-outlined p-button-rounded" 
+              (click)="backToFilterSelection()"></button>
+      <h2 class="text-3xl font-bold text-blue-900 text-center">Select a Main Service</h2>
+      <div style="width: 120px;"></div> <!-- Empty div for alignment -->
+    </div>
+    
+    <!-- Loading indicator for services -->
+    <div *ngIf="secteursLoading" class="flex justify-center py-8">
+      <p-progressSpinner styleClass="w-12 h-12" strokeWidth="4" fill="var(--surface-ground)" animationDuration=".5s"></p-progressSpinner>
+      <span class="ml-4 text-gray-600">Loading services...</span>
+    </div>
+    
+    <div *ngIf="!secteursLoading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div *ngFor="let service of mainServices; let i = index" 
+           class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02]" 
+           (click)="selectMainService(service)">
+        <!-- Use different colors for cards based on index -->
+        <div [ngClass]="{'bg-blue-50': i % 5 === 0, 'bg-green-50': i % 5 === 1, 'bg-purple-50': i % 5 === 2, 'bg-amber-50': i % 5 === 3, 'bg-cyan-50': i % 5 === 4}" 
+             class="p-3 flex justify-center">
+          <span [ngClass]="{'text-blue-700': i % 5 === 0, 'text-green-700': i % 5 === 1, 'text-purple-700': i % 5 === 2, 'text-amber-700': i % 5 === 3, 'text-cyan-700': i % 5 === 4}" 
+                class="text-3xl">
+            <i class="pi pi-briefcase"></i>
+          </span>
+        </div>
+        <div class="p-2 text-center">
+          <h4 class="text-sm font-medium text-blue-900">{{ service.name }}</h4>
+          <!-- Show indicator if service has sub-services -->
+          <span *ngIf="service.children && service.children.length > 0" class="pi pi-chevron-right text-xs text-blue-500 ml-1"></span>
+        </div>
+      </div>
+      
+      <!-- All Services option -->
+      <div class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02]" 
+           (click)="selectServiceFilter(null, 'All services')">
+        <div class="bg-gray-50 p-3 flex justify-center">
+          <span class="text-3xl text-gray-700">
+            <i class="pi pi-th-large"></i>
+          </span>
+        </div>
+        <div class="p-2 text-center">
+          <h4 class="text-sm font-medium text-blue-900">All services</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Sub-Service Selection (Step 2.5 for Service) -->
+  <div *ngIf="filterStep === 2 && filterMode === 'service' && serviceFilterStep === 2 && selectedMainService" class="p-6 max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <button pButton type="button" icon="pi pi-arrow-left" label="Back to services" 
+              class="p-button-outlined p-button-rounded" 
+              (click)="backToMainServiceSelection()"></button>
+      <h2 class="text-3xl font-bold text-blue-900 text-center">{{ selectedMainService.name }}</h2>
+      <div style="width: 120px;"></div> <!-- Empty div for alignment -->
+    </div>
+    
+    <p class="text-center text-gray-600 mb-6">Select a specific sub-service</p>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <!-- Option to select the main service directly -->
+      <div class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02] border-2 border-blue-200" 
+           (click)="selectServiceFilter(selectedMainService.id, selectedMainService.name)">
+        <div class="bg-blue-50 p-3 flex justify-center">
+          <span class="text-3xl text-blue-700">
+            <i class="pi pi-briefcase"></i>
+          </span>
+        </div>
+        <div class="p-2 text-center">
+          <h4 class="text-sm font-medium text-blue-900">All {{ selectedMainService.name }}</h4>
+        </div>
+      </div>
+      
+      <!-- Sub-services -->
+      <div *ngFor="let subService of selectedMainService.children; let i = index" 
+           class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02]" 
+           (click)="selectSubService(subService)">
+        <!-- Use different colors for cards based on index -->
+        <div [ngClass]="{'bg-blue-50': i % 5 === 0, 'bg-green-50': i % 5 === 1, 'bg-purple-50': i % 5 === 2, 'bg-amber-50': i % 5 === 3, 'bg-cyan-50': i % 5 === 4}" 
+             class="p-3 flex justify-center">
+          <span [ngClass]="{'text-blue-700': i % 5 === 0, 'text-green-700': i % 5 === 1, 'text-purple-700': i % 5 === 2, 'text-amber-700': i % 5 === 3, 'text-cyan-700': i % 5 === 4}" 
+                class="text-3xl">
+            <i class="pi pi-tag"></i>
+          </span>
+        </div>
+        <div class="p-2 text-center">
+          <h4 class="text-sm font-medium text-blue-900">{{ subService.name }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Structure Selection (Step 2 for Structure) -->
+  <div *ngIf="filterStep === 2 && filterMode === 'structure'" class="p-6 max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <button pButton type="button" icon="pi pi-arrow-left" label="Back" 
+              class="p-button-outlined p-button-rounded" 
+              (click)="backToFilterSelection()"></button>
+      <h2 class="text-3xl font-bold text-blue-900 text-center">Select a Structure</h2>
+      <div style="width: 120px;"></div> <!-- Empty div for alignment -->
+    </div>
+    
+    <!-- Loading indicator for structures -->
+    <div *ngIf="structuresLoading" class="flex justify-center py-8">
+      <p-progressSpinner styleClass="w-12 h-12" strokeWidth="4" fill="var(--surface-ground)" animationDuration=".5s"></p-progressSpinner>
+      <span class="ml-4 text-gray-600">Loading structures...</span>
+    </div>
+    
+    <div *ngIf="!structuresLoading" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div *ngFor="let structureOption of structures; let i = index" 
+           class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-[1.02]" 
+           (click)="selectStructureFilter(structureOption.value, structureOption.label)">
+        <!-- Use different colors for cards based on index -->
+        <div [ngClass]="{'bg-teal-50': i % 5 === 0, 'bg-indigo-50': i % 5 === 1, 'bg-orange-50': i % 5 === 2, 'bg-rose-50': i % 5 === 3, 'bg-emerald-50': i % 5 === 4}" 
+             class="p-3 flex justify-center">
+          <span [ngClass]="{'text-teal-700': i % 5 === 0, 'text-indigo-700': i % 5 === 1, 'text-orange-700': i % 5 === 2, 'text-rose-700': i % 5 === 3, 'text-emerald-700': i % 5 === 4}" 
+                class="text-3xl">
+            <i class="pi pi-building"></i>
+          </span>
+        </div>
+        <div class="p-2 text-center">
+          <h4 class="text-sm font-medium text-blue-900">{{ structureOption.label }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- API Table Section (Step 3) -->
+  <div *ngIf="filterStep === 3 || showApiTable" class="p-6 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <button pButton type="button" icon="pi pi-arrow-left" label="Back" 
+              class="p-button-outlined p-button-rounded" 
+              (click)="backToFilterSelection()"></button>
+      <h2 class="text-3xl font-bold text-blue-900 text-center">
+        <span *ngIf="filterMode === 'service'">APIs for service: {{ selectedFilterLabel }}</span>
+        <span *ngIf="filterMode === 'structure'">APIs for structure: {{ selectedFilterLabel }}</span>
+      </h2>
+      <div style="width: 120px;"></div> <!-- Empty div for alignment -->
+    </div>
+    
+    <!-- Search bar above table -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h5 class="text-xl font-medium text-blue-900 m-0">API List</h5>
+        <span class="p-input-icon-left w-full md:w-auto">
+          <i class="pi pi-search"></i>
+          <input #searchInput pInputText type="text" class="w-full md:w-auto" 
+                 placeholder="Search..." 
+                 (input)="onGlobalSearch(searchInput.value)" />
+        </span>
+      </div>
+    </div>
+    
+    <!-- Loading spinner -->
+    <div *ngIf="loading" class="flex justify-center py-12">
+      <p-progressSpinner styleClass="w-16 h-16" strokeWidth="4" fill="var(--surface-ground)" animationDuration=".5s"></p-progressSpinner>
+      <span class="ml-4 text-lg text-gray-600">Loading APIs...</span>
+    </div>
+    
+    <!-- APIs Card Grid -->
+    <div *ngIf="!loading" class="mb-4">
+      <!-- Pagination controls -->
+      <div class="flex justify-content-between align-items-center mb-4 bg-white rounded-lg p-3 shadow-sm">
+        <span class="text-sm text-gray-600">
+          Showing {{(apis().length > 0 ? 1 : 0)}} to {{Math.min(apis().length, 10)}} of {{total}} API(s)
+        </span>
+        <div>
+          <button pButton type="button" icon="pi pi-chevron-left" 
+                  class="p-button-rounded p-button-text p-button-sm mr-2"
+                  [disabled]="currentPage === 0" 
+                  (click)="prevPage()"></button>
+          <span class="text-sm font-medium mx-2">Page {{currentPage + 1}}</span>
+          <button pButton type="button" icon="pi pi-chevron-right" 
+                  class="p-button-rounded p-button-text p-button-sm ml-2"
+                  [disabled]="(currentPage + 1) * 10 >= total" 
+                  (click)="nextPage()"></button>
+        </div>
+        <div class="flex align-items-center">
+          <span class="text-sm mr-2">Items per page:</span>
+          <p-dropdown [options]="[{label: '10', value: 10}, {label: '25', value: 25}, {label: '50', value: 50}]" 
+                     [(ngModel)]="itemsPerPage" (onChange)="onItemsPerPageChange($event)"
+                     styleClass="p-dropdown-sm"></p-dropdown>
+        </div>
+      </div>
+      
+      <!-- API Cards List using the same style as My API Requests -->
+      <div *ngIf="apis().length > 0" class="requests-grid mt-6">
+        <div *ngFor="let api of apis(); let i = index" class="request-card">
+          <div class="request-header">
+            <div>
+              <h3 class="api-name">{{ api.name }}</h3>
+              <div class="date-info">{{ api.updatedAt | date:'MMM d, y' }}</div>
+            </div>
+            <div>
+              <span class="status-{{ api.status || 'unknown' }}">
+                {{ api.status || 'Unknown' }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="user-info">
+            <p-avatar icon="pi pi-user" shape="circle" [style]="{'background-color': '#E9ECEF'}"></p-avatar>
+            <div class="user-details">
+              <div class="user-name">Administrator</div>
+              <div class="user-email">API Provider</div>
+            </div>
+          </div>
+          
+          <div class="request-details">
+            <div class="detail-item">
+              <span class="detail-label">Structure</span>
+              <span class="detail-value">Ministry of Interior - Civil Status</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Sector</span>
+              <span class="detail-value">Civil Status and Official Documents</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Service</span>
+              <span class="detail-value">{{ api.name }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Description</span>
+              <span class="detail-value">{{ (api.description | slice:0:50) || 'No description' }}{{ (api.description && api.description.length > 50) ? '...' : '' }}</span>
+            </div>
+          </div>
+          
+          <!-- Action Buttons Row -->
+          <div class="request-actions">
+            <button pButton 
+                    pRipple 
+                    type="button" 
+                    icon="pi pi-eye"
+                    label="View Details"
+                    class="p-button-sm"
+                    [routerLink]="['/user/apis', api.id]">
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Empty state -->
+      <div *ngIf="apis().length === 0" class="bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <div class="flex flex-col items-center py-10">
+          <i class="pi pi-info-circle text-5xl text-blue-300 mb-4"></i>
+          <span class="text-xl font-medium text-blue-900 mb-2">No APIs found for {{ selectedFilterLabel }}</span>
+          <p class="text-gray-600 mt-2 max-w-lg text-center">
+            There are currently no APIs available for this {{ filterMode }}. 
+            You can try selecting a different {{ filterMode }} or go back to the selection screen.
+          </p>
+          <button pButton type="button" label="Go back to selection" icon="pi pi-arrow-left" 
+                  class="mt-6 p-button-outlined" (click)="backToFilterSelection()"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

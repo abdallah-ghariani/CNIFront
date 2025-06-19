@@ -5,7 +5,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms";
-import { Router, RouterLink } from "@angular/router";
+import { Router } from "@angular/router";
 import { CheckboxModule } from "primeng/checkbox";
 import { InputTextModule } from "primeng/inputtext";
 import { ButtonModule } from "primeng/button";
@@ -22,7 +22,7 @@ import { Role } from "../../models/roles";
     ButtonModule,
     InputTextModule,
     ReactiveFormsModule,
-    RouterLink,
+
     CommonModule,
   ],
   templateUrl: 'login.component.html'

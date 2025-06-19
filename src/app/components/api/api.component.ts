@@ -1,185 +1,136 @@
-/*import { Component, signal } from '@angular/core';
-import { ApiService } from '../../services/api.service';
-import { Api } from '../../models/api';
-import { FilterMetadata, ConfirmationService } from 'primeng/api';
-import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { DropdownModule } from 'primeng/dropdown';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { Table, TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { CommonModule } from '@angular/common';
+import { TagModule } from 'primeng/tag';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { ApiService } from '../../services/api.service';
+
+// Models
+interface Api {
+  id: string;
+  name: string;
+  structure: string;
+  secteur: string;
+  availability: number;
+  description: string;
+  updatedAt: string;
+}
+
+interface Structure {
+  label: string;
+  value: string;
+}
+
+interface Availability {
+  label: string;
+  value: number;
+}
 
 @Component({
   selector: 'app-api-list',
+  templateUrl: 'api.component.html',
+ 
+  standalone: true,
   imports: [
-    TableModule,
-    ButtonModule,
-    InputTextModule,
-    DropdownModule,
     CommonModule,
     FormsModule,
-  ],
-  templateUrl: './api.component.html',
-  styles: [`
-    ::ng-deep .p-datatable-table-container {
-      min-height: 300px;
-    }
-  `],
-  providers: [ConfirmationService],
+    TableModule,
+    TagModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    MultiSelectModule,
+    SelectModule
+  ]
 })
-export class ApiListComponent {
-  apis = signal<Api[]>([]);
-  loading = false;
-  total = 0;
-  globalFilter = '';
+export class ApiListComponent implements OnInit {
+  @ViewChild('dt') table!: Table;
 
-  // Dropdown options (you can fetch these dynamically if needed)
-  structures = [
-    { label: 'Toutes les structures', value: null },
-    { label: 'INSEE', value: 'INSEE' },
-    // Add more structures as needed
-  ];
+  apis: Api[] = [];
+  structures: Structure[] = [];
+  availabilities: Availability[] = [];
 
-  availabilities = [
-    { label: 'Toutes les modalités d’accès', value: null },
-    { label: 'Disponibilité > 99%', value: 99 },
-    { label: 'Disponibilité > 95%', value: 95 },
-    // Add more as needed
-  ];
+  loading: boolean = true;
+  total: number = 0;
+  globalFilterValue: string = '';
 
   constructor(private apiService: ApiService) {}
 
+  ngOnInit() {
+    this.loadStructures();
+    this.initAvailabilities();
+  }
+
+  loadStructures() {
+    this.structures = [
+      { label: "Ministère de l'Économie", value: "Ministère de l'Économie" },
+      { label: "Ministère de la Santé", value: "Ministère de la Santé" },
+      { label: "Ministère de l'Éducation", value: "Ministère de l'Éducation" },
+      { label: "Agence Nationale", value: "Agence Nationale" }
+    ];
+  }
+
+  initAvailabilities() {
+    this.availabilities = [
+      { label: 'Tous', value: 0 },
+      { label: '> 90%', value: 90 },
+      { label: '> 95%', value: 95 },
+      { label: '> 99%', value: 99 }
+    ];
+  }
+
   loadApis(event: TableLazyLoadEvent) {
     this.loading = true;
-    const size = event.rows as number;
-    const page = Math.floor((event.first || 0) / size);
-    const structure = (event.filters?.['structure'] as FilterMetadata)?.value;
-    const availability = (event.filters?.['availability'] as FilterMetadata)?.value;
 
-    this.apiService.getApis(page, size, undefined, structure, availability).subscribe({
-      next: (page) => {
-        this.apis.set(page.content);
-        this.total = page.totalElements;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Error loading APIs:', err);
-        this.loading = false;
-      },
-    });
-  }
+    const page = event.first !== undefined ? Math.floor(event.first / (event.rows || 10)) : 0;
+    const size = event.rows || 10;
 
-  onGlobalFilter(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.globalFilter = input.value;
-  }
-
-  onSearch() {
-    // Trigger table reload with the global filter if needed
-    // For now, we'll rely on the table's built-in filtering
-  }
-}*/
-import { Component, signal } from '@angular/core';
-import { ApiService } from '../../services/api.service';
-import { Api } from '../../models/api';
-import { FilterMetadata, ConfirmationService } from 'primeng/api';
-import { TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { DropdownModule } from 'primeng/dropdown';
-import { FormsModule } from '@angular/forms';
-
-@Component({
-  selector: 'app-api-list',
-  imports: [
-    TableModule,
-    ButtonModule,
-    InputTextModule,
-    DropdownModule,
-    FormsModule,
-  ],
-  templateUrl: './api.component.html',
-  styles: [`
-    ::ng-deep .p-datatable-table-container {
-      min-height: 300px;
+    let sort = '';
+    if (event.sortField) {
+      sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
-  `],
-  providers: [ConfirmationService],
-})
-export class ApiListComponent {
-  apis = signal<Api[]>([]);
-  loading = false;
-  total = 0;
-  globalFilter = '';
 
-  structures = [
-    { label: 'Toutes les structures', value: null },
-    { label: 'INSEE', value: 'INSEE' },
-  ];
+    const filters = event.filters || {};
+    let secteur = '';
+    let structure = '';
+    let availability: number | undefined = undefined;
 
-  availabilities = [
-    { label: 'Toutes les modalités d’accès', value: null },
-    { label: 'Disponibilité > 99%', value: 99 },
-    { label: 'Disponibilité > 95%', value: 95 },
-  ];
+    
 
-  constructor(private apiService: ApiService) {
-    // Add dummy data for testing
-    this.apis.set([
-      {
-        id: '1',
-        name: 'API SIRENE',
-        secteur: 'Entreprises',
-        structure: 'INSEE',
-        availability: 99.5,
-        description: 'API pour interroger le répertoire SIRENE.',
-        updatedAt: 'Mis à jour le 24 décembre 2024',
-      },
-      {
-        id: '2',
-        name: 'API Geo',
-        secteur: 'Géographie',
-        structure: 'IGN',
-        availability: 98.0,
-        description: 'API pour des données géographiques.',
-        updatedAt: 'Mis à jour le 15 octobre 2024',
-      },
-    ]);
-    this.total = 2;
-  }
-
-  loadApis(event: TableLazyLoadEvent) {
-    this.loading = true;
-    const size = event.rows as number;
-    const page = Math.floor((event.first || 0) / size);
-    const structure = (event.filters?.['structure'] as FilterMetadata)?.value;
-    const availability = (event.filters?.['availability'] as FilterMetadata)?.value;
-
-    // Comment out the actual API call for now
-    /*
-    this.apiService.getApis(page, size, undefined, structure, availability).subscribe({
-      next: (page) => {
-        this.apis.set(page.content);
-        this.total = page.totalElements;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Error loading APIs:', err);
-        this.loading = false;
-      },
-    });
-    */
-
-    // Use dummy data for testing
-    this.loading = false;
+    this.apiService.getApis(page, size, sort, secteur, structure, availability)
+      .subscribe({
+        next: (response) => {
+          this.apis = response.content;
+          this.total = response.totalElements;
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Error loading APIs:', err);
+          this.loading = false;
+        }
+      });
   }
 
   onGlobalFilter(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.globalFilter = input.value;
+    const inputElement = event.target as HTMLInputElement;
+    this.globalFilterValue = inputElement.value;
+    this.table.filterGlobal(this.globalFilterValue, 'contains');
   }
 
-  onSearch() {
-    // Trigger table reload with the global filter if needed
+  getSeverity(availability: number): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined {
+    if (availability >= 99) return 'success';
+    if (availability >= 95) return 'info';
+    if (availability >= 90) return 'warn';
+    return 'danger';
+  }
+
+  clear() {
+    this.table.clear();
+    this.globalFilterValue = '';
   }
 }

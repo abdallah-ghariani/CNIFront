@@ -1,11 +1,15 @@
-<div class="p-4">
-    <p-confirmdialog />
+<div class="p-4 bg-gray-50 min-h-screen">
+  <!-- Page Header -->
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">User Management</h1>
     <button
       pButton
       label="Add User"
-      class="p-button-primary mb-2"
+      class="p-button-primary"
       (click)="openAddDialog()"
     ></button>
+  </div>
+    <p-confirmdialog />
     <div>
       <p-table
         [value]="users()"
@@ -21,6 +25,8 @@
           <tr>
             <th>#</th>
             <th>Name</th>
+            <th>Structure</th>
+            <th>Sector</th>
             <th>Role</th>
             <th>Action</th>
           </tr>
@@ -37,6 +43,50 @@
             </th>
             <th>
               <p-columnFilter
+                field="structureId"
+                matchMode="equals"
+                [showMenu]="false"
+              >
+                <ng-template #filter let-value let-filter="filterCallback">
+                  <p-dropdown
+                    [ngModel]="value"
+                    [options]="structures"
+                    (onChange)="filter($event.value)"
+                    placeholder="Select a Structure"
+                    [showClear]="true"
+                    optionLabel="label"
+                    optionValue="value"
+                    dataKey="value"
+                    class="w-full"
+                  >
+                  </p-dropdown>
+                </ng-template>
+              </p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter
+                field="secteurId"
+                matchMode="equals"
+                [showMenu]="false"
+              >
+                <ng-template #filter let-value let-filter="filterCallback">
+                  <p-dropdown
+                    [ngModel]="value"
+                    [options]="secteurs"
+                    (onChange)="filter($event.value)"
+                    placeholder="Select a Sector"
+                    [showClear]="true"
+                    optionLabel="label"
+                    optionValue="value"
+                    dataKey="value"
+                    class="w-full"
+                  >
+                  </p-dropdown>
+                </ng-template>
+              </p-columnFilter>
+            </th>
+            <th>
+              <p-columnFilter
                 field="role"
                 matchMode="equals"
                 [showMenu]="false"
@@ -48,7 +98,7 @@
                     (onChange)="filter($event.value)"
                     placeholder="Select a Role"
                     [showClear]="true"
-                    class="w-64"
+                    class="w-full"
                   >
                   </p-select>
                 </ng-template>
@@ -58,23 +108,54 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-user let-i="rowIndex">
-          <tr>
+          <tr class="hover:bg-gray-50">
             <td>{{ i + 1 }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.role }}</td>
             <td>
-              <button
-                pButton
-                label="Edit"
-                class="p-button-rounded p-button-info mr-2"
-                (click)="openEditDialog(user)"
-              ></button>
-              <button
-                pButton
-                label="Delete"
-                class="p-button-rounded p-button-danger"
-                (click)="deleteUser(user.id)"
-              ></button>
+              <div class="flex items-center">
+                <span class="pi pi-user mr-2 text-blue-500"></span>
+                <span class="font-medium">{{ user.username }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                    [ngClass]="{'bg-purple-100 text-purple-800': !!user.structure?.name, 'bg-gray-100 text-gray-800': !user.structure?.name}">
+                {{ user.structure?.name || 'Not assigned' }}
+              </span>
+            </td>
+            <td>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{'bg-blue-100 text-blue-800': !!user.secteur?.name, 'bg-gray-100 text-gray-800': !user.secteur?.name}">
+                {{ user.secteur?.name || 'Not assigned' }}
+              </span>
+            </td>
+            <td>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-green-100 text-green-800': user.role === 'ADMIN',
+                      'bg-blue-100 text-blue-800': user.role === 'USER',
+                      'bg-amber-100 text-amber-800': user.role === 'MANAGER',
+                      'bg-gray-100 text-gray-800': !user.role
+                    }">
+                {{ user.role || 'Unknown' }}
+              </span>
+            </td>
+            <td>
+              <div class="flex gap-2">
+                <button
+                  pButton
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-info"
+                  (click)="openEditDialog(user)"
+                  pTooltip="Edit User"
+                ></button>
+                <button
+                  pButton
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  (click)="deleteUser(user.id)"
+                  pTooltip="Delete User"
+                ></button>
+              </div>
             </td>
           </tr>
         </ng-template>
@@ -160,6 +241,38 @@
         class="w-full p-2 border rounded"
       />
     </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Structure</label>
+      <p-dropdown
+        [options]="structures"
+        [(ngModel)]="newUser.structure"
+        placeholder="Select a Structure"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        [showClear]="true"
+        [loading]="loadingDropdowns"
+        class="w-full"
+      ></p-dropdown>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">Sector</label>
+      <p-dropdown
+        [options]="secteurs"
+        [(ngModel)]="newUser.secteur"
+        placeholder="Select a Sector"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="true"
+        filterBy="label"
+        [showClear]="true"
+        [loading]="loadingDropdowns"
+        class="w-full"
+      ></p-dropdown>
+    </div>
+    
     <div class="mb-4">
       <label class="block text-sm font-medium mb-1">Role</label>
       <p-select

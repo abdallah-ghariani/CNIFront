@@ -1,0 +1,935 @@
+<div class="card">
+  <div class="container mx-auto p-5 bg-gray-50 min-h-screen">
+    <!-- Back button with rounded style -->    
+    <div class="pt-6 pb-2 px-6 max-w-6xl mx-auto">
+      <a routerLink="/user/dashboard" class="inline-flex items-center justify-center rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-blue-50 transition-colors">
+        <i class="pi pi-arrow-left mr-2"></i>
+        Back
+      </a>
+    </div>
+    
+    <!-- Removed the duplicate My APIs header -->
+    <div class="pt-4 pb-6 px-6 max-w-6xl mx-auto">
+      <!-- Empty div to maintain spacing -->
+    </div>
+    
+    <p-toast></p-toast>
+    
+    <!-- API Cards Layout -->
+    <div class="max-w-6xl mx-auto px-6">
+      <!-- API Container with white background -->
+      <div class="bg-white rounded-lg shadow-sm mb-8 p-6 api-requests-container">
+        <!-- Header Section with Search -->
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-xl font-semibold text-blue-800 mb-1">API List</h2>
+            <p class="text-gray-600">Available APIs on the platform.</p>
+          </div>
+          
+          <!-- Search Bar -->
+          <div class="search-container">
+            <span class="p-input-icon-left search-box">
+              <i class="pi pi-search"></i>
+              <input pInputText type="text" placeholder="Search..." (input)="onGlobalSearch($event)" class="p-inputtext rounded-lg w-full" />
+            </span>
+          </div>
+        </div>
+        
+        <!-- Search Bar for existing APIs - Use this BEFORE creating a new API -->
+        <div class="p-inputgroup mb-4">
+          <span class="p-inputgroup-addon">
+            <i class="pi pi-search"></i>
+          </span>
+          <input pInputText type="text" [(ngModel)]="searchText" placeholder="Search existing APIs before creating a new one..." 
+            (input)="filterApis()" class="w-full" />
+          <button *ngIf="searchText" pButton type="button" icon="pi pi-times" class="p-button-outlined" 
+            (click)="clearSearch()"></button>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div *ngIf="loading" class="flex justify-center items-center py-8">
+          <i class="pi pi-spin pi-spinner text-blue-500 text-4xl"></i>
+        </div>
+        
+        <!-- API Cards List -->
+        <div *ngIf="!loading && myApis.length > 0" class="requests-grid mt-6">
+          <div *ngFor="let api of myApis | slice:(page-1)*itemsPerPage:page*itemsPerPage" class="request-card">
+            <div class="request-header">
+              <div>
+                <h3 class="api-name">{{ api.name }}</h3>
+                <div class="date-info">{{ api.updatedAt | date:'MMM d, y' }}</div>
+              </div>
+              <div>
+                <span class="status-{{ api.status || 'approved' }}">
+                  {{ api.status || 'Approved' }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="user-info">
+              <p-avatar icon="pi pi-user" shape="circle" [style]="{'background-color': '#E9ECEF'}"></p-avatar>
+              <div class="user-details">
+                <div class="user-name">{{ userName }}</div>
+                <div class="user-email">{{ userEmail }}</div>
+              </div>
+            </div>
+            
+            <div class="request-details">
+              <div class="detail-item">
+                <span class="detail-label">Structure</span>
+                <span class="detail-value">{{ getStructureName(api.structure) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Sector</span>
+                <span class="detail-value">{{ getSectorName(api.secteur) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Service</span>
+                <span class="detail-value">{{ getServiceName(api.service) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Description</span>
+                <span class="detail-value">{{ (api.description | slice:0:50) || 'No description' }}{{ (api.description && api.description.length > 50) ? '...' : '' }}</span>
+              </div>
+            </div>
+            
+            <!-- Action Buttons Row -->
+            <div class="request-actions">
+              <button pButton 
+                      pRipple 
+                      type="button" 
+                      icon="pi pi-pencil"
+                      label="Modify"
+                      class="p-button-outlined p-button-sm" 
+                      (click)="modifyApi(api)">
+              </button>
+              <button pButton 
+                      pRipple 
+                      type="button" 
+                      icon="pi pi-eye"
+                      label="View Details"
+                      class="p-button-sm" 
+                      [routerLink]="['/user/apis', api.id]">
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- No APIs message -->
+        <div *ngIf="!loading && myApis.length === 0" class="text-center py-8">
+          <i class="pi pi-inbox text-gray-400 text-5xl mb-4"></i>
+          <h3 class="text-xl font-semibold text-gray-600 mb-2">No APIs Found</h3>
+          <p class="text-gray-500 mb-6">You don't have any APIs yet.</p>
+        </div>
+        
+        <!-- Pagination controls -->
+        <div *ngIf="!loading && myApis.length > 0" class="flex justify-between items-center py-4 mt-4 border-t border-gray-200">
+          <div class="text-sm text-gray-600">
+            Showing {{ (page-1)*itemsPerPage + 1 }} to {{ Math.min(page*itemsPerPage, myApis.length) }} of {{ myApis.length }} API(s)
+          </div>
+          
+          <div class="flex items-center space-x-1">
+            <button pButton type="button" icon="pi pi-chevron-left" class="p-button-text p-button-sm" [disabled]="page === 1" (click)="page = page - 1"></button>
+            <span class="text-sm font-medium mx-2">Page {{page}}</span>
+            <button pButton type="button" icon="pi pi-chevron-right" class="p-button-text p-button-sm" [disabled]="page*itemsPerPage >= myApis.length" (click)="page = page + 1"></button>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <span class="text-gray-600 text-sm">Items per page:</span>
+            <p-dropdown [options]="[5, 10, 20, 50]" [(ngModel)]="itemsPerPage" (onChange)="onItemsPerPageChange($event)" styleClass="p-dropdown-sm"></p-dropdown>
+          </div>
+        </div>
+      </div>
+      
+      <!-- API Requests Status Section -->
+      <div class="bg-white rounded-lg shadow-sm mb-8 p-6 api-requests-container">
+        <!-- Header Section with Search -->
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-xl font-semibold text-blue-800 mb-1">My API Creation Requests</h2>
+            <p class="text-sm text-gray-600">Track the status of your requests to create new APIs</p>
+          </div>
+          <div>
+            <button 
+              *ngIf="userRole === 'admin' || hasAdminPrivileges"
+              pButton 
+              label="Request New API" 
+              icon="pi pi-plus" 
+              class="p-button-primary" 
+              (click)="onRequestNewApi()"
+            ></button>
+          </div>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-container mb-4">
+          <span class="p-input-icon-left search-box">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" placeholder="Search creation requests..." [(ngModel)]="requestSearchText" class="p-inputtext rounded-lg w-full" />
+          </span>
+        </div>
+        
+        <!-- Loading indicator for requests -->
+        <div *ngIf="loadingRequests" class="flex justify-center items-center py-8">
+          <i class="pi pi-spin pi-spinner text-blue-500 text-4xl"></i>
+        </div>
+        
+        <!-- Empty state message when no requests found -->
+        <div *ngIf="!loadingRequests && myApiRequests.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="mb-4 text-gray-400">
+            <i class="pi pi-inbox text-6xl"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-700 mb-2">No API Requests Found</h3>
+          <p class="text-gray-500 mb-6">You haven't submitted any API requests yet.</p>
+          <button pButton label="Browse APIs" icon="pi pi-search" class="p-button-outlined p-button-info" (click)="clearSearch()"></button>
+        </div>
+        
+        <!-- Requests Grid View -->
+        <div *ngIf="!loadingRequests && myApiRequests.length > 0" class="requests-grid mt-6">
+          <div *ngFor="let request of filteredApiRequests" class="request-card border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h3 class="text-lg font-semibold text-blue-800">{{ request.apiName }}</h3>
+                <div class="text-sm text-gray-500">{{ request.requestDate | date:'MMM d, yyyy' }}</div>
+              </div>
+              <div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium" 
+                  [ngClass]="{
+                    'bg-green-100 text-green-800': request.status === 'approved', 
+                    'bg-red-100 text-red-800': request.status === 'rejected',
+                    'bg-yellow-100 text-yellow-800': request.status === 'pending'
+                  }">
+                  {{ request.status === 'approved' ? 'Approved' : request.status === 'rejected' ? 'Rejected' : 'Pending' }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="p-4 flex items-center border-b border-gray-100">
+              <div class="flex-shrink-0 mr-3">
+                <p-avatar [label]="(request.name ? request.name.charAt(0) : 'U')" shape="circle" [style]="{'background-color': '#E9ECEF', 'color': '#4B5563'}"></p-avatar>
+              </div>
+              <div>
+                <div class="font-medium text-gray-900">{{ request.name }}</div>
+                <div class="text-sm text-gray-500">{{ request.email }}</div>
+              </div>
+            </div>
+            
+            <div class="p-4 grid grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Structure</div>
+                <div class="text-sm">{{ getStructureName(request.structure) }}</div>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Sector</div>
+                <div class="text-sm">{{ getSectorName(request.secteur) }}</div>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Service</div>
+                <div class="text-sm">{{ getServiceName(request.service) }}</div>
+              </div>
+              <div *ngIf="request.message">
+                <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Description</div>
+                <div class="text-sm">{{ request.message | slice:0:50 }}{{ (request.message && request.message.length > 50) ? '...' : '' }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Empty state -->
+          <div *ngIf="filteredApiRequests.length === 0" class="col-span-full empty-state text-center py-8">
+            <i class="pi pi-inbox text-gray-400 text-5xl mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No API Requests Found</h3>
+            <p class="text-gray-500 mb-6">You haven't submitted any API requests yet.</p>
+            <button pButton type="button" label="Browse APIs" icon="pi pi-search" class="p-button-outlined" routerLink="/user/apis"></button>
+          </div>
+        </div>
+
+        <!-- Pagination controls -->
+        <div *ngIf="!loadingRequests && filteredApiRequests.length > 0" class="flex justify-between items-center py-4 mt-4 border-t border-gray-200">
+          <div class="text-sm text-gray-600">
+            Showing {{ filteredApiRequests.length }} of {{ totalRequests }} requests
+          </div>
+          <p-paginator [rows]="requestsPerPage" [totalRecords]="totalRequests" 
+                       (onPageChange)="onRequestPageChange($event)" [rowsPerPageOptions]="[5, 10, 25]"></p-paginator>
+        </div>
+      </div>
+    </div>
+    
+    <!-- API Details Dialog -->
+    <p-dialog [(visible)]="apiDetailsVisible" [header]="selectedApiDetails?.name || 'API Details'" [modal]="true" [style]="{width: '700px'}" [draggable]="false" [resizable]="false">
+      <div *ngIf="selectedApiDetails" class="p-grid">
+        <!-- API General Info Section -->
+        <div class="p-12 bg-blue-50 rounded-lg mb-6">
+          <h3 class="text-xl font-bold text-blue-800 mb-2">{{ selectedApiDetails.name }}</h3>
+          <p class="text-gray-600 mb-4">{{ selectedApiDetails.description }}</p>
+          
+          <div class="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <p class="text-sm text-gray-500">Status</p>
+              <p-badge [value]="selectedApiDetails.status || 'Unknown'" [severity]="getStatusClass(selectedApiDetails.status)"></p-badge>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Last Updated</p>
+              <p>{{ getFormattedDate(selectedApiDetails.updatedAt) }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- API Details Section -->
+        <div class="mb-6">
+          <h4 class="text-lg font-semibold text-blue-800 mb-4">API Details</h4>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="mb-4">
+              <p class="text-sm text-gray-500 mb-1">Base URL</p>
+              <p class="font-mono bg-gray-100 p-2 rounded">{{ selectedApiDetails.baseUrl || 'N/A' }}</p>
+            </div>
+            <div class="mb-4">
+              <p class="text-sm text-gray-500 mb-1">Version</p>
+              <p>{{ selectedApiDetails.version || 'v1' }}</p>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <p class="text-sm text-gray-500 mb-1">Authentication</p>
+            <p>{{ selectedApiDetails.requiresAuth ? (selectedApiDetails.authType || 'Required') : 'Not Required' }}</p>
+          </div>
+          
+          <div *ngIf="selectedApiDetails.endpoints && selectedApiDetails.endpoints.length > 0">
+            <p class="text-sm text-gray-500 mb-2">Endpoints</p>
+            <ng-container *ngFor="let endpoint of getEndpoints(selectedApiDetails)">
+              <div class="bg-gray-100 p-2 rounded mb-2 font-mono text-sm">
+                <!-- Display differently based on endpoint type -->
+                <ng-container *ngIf="isString(endpoint); else detailedEndpoint">
+                  {{ endpoint }}
+                </ng-container>
+                <ng-template #detailedEndpoint>
+                  <div class="font-bold">{{ endpoint.method }} {{ endpoint.path }}</div>
+                  <div class="text-xs mt-1">{{ endpoint.description }}</div>
+                </ng-template>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        
+        <!-- Provider Information -->
+        <div class="mb-6">
+          <h4 class="text-lg font-semibold text-blue-800 mb-4">Provider Information</h4>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="mb-4">
+              <p class="text-sm text-gray-500 mb-1">Sector</p>
+              <p>{{ getSectorName(selectedApiDetails.secteur) }}</p>
+            </div>
+            <div class="mb-4">
+              <p class="text-sm text-gray-500 mb-1">Organization</p>
+              <p>{{ selectedApiDetails.structure }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="!selectedApiDetails" class="p-5 text-center">
+        <i class="pi pi-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">API Details Not Available</h3>
+        <p class="text-gray-500">The selected API could not be found or you don't have permission to view it.</p>
+      </div>
+      
+      <ng-template pTemplate="footer">
+        <button pButton pRipple label="Close" icon="pi pi-times" class="p-button-text" (click)="apiDetailsVisible = false"></button>
+      </ng-template>
+    </p-dialog>
+
+    <!-- Bottom section with API Request button-->
+    <div *ngIf="!displayApiRequestSection && requestType !== 'modify'" class="py-12 px-8 bg-gray-100 text-center mt-8">
+      <div class="max-w-3xl mx-auto">
+        <h2 class="text-3xl font-bold text-blue-900 mb-6">Need a Custom API?</h2>
+        <p class="text-gray-700 mb-8 text-lg">
+          Need a custom API for your specific requirements? Request a new API to be added to our platform.
+          Join government organizations already benefiting from our extensive API catalog.
+        </p>
+        <button 
+          pButton 
+          type="button" 
+          label="Request New API" 
+          icon="pi pi-plus"
+          class="p-button-lg p-button-raised" 
+          style="background-color: #1a365d; font-size: 1.25rem; padding: 1rem 2rem;"
+          (click)="onNewApiRequest()">
+        </button>
+      </div>
+    </div>
+
+    <!-- API Request Form Section - appears when button is clicked or in modify mode -->
+    <div *ngIf="displayApiRequestSection" class="py-12 px-8 bg-gray-50 mt-8 request-form-section">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-3xl font-bold text-blue-900">
+            {{ requestType === 'modify' ? 'Modify API: ' + (selectedApi?.name || '') : 'Request New API' }}
+          </h2>
+          <button 
+            *ngIf="requestType === 'modify'" 
+            pButton 
+            type="button" 
+            icon="pi pi-times" 
+            class="p-button-text p-button-rounded p-button-secondary" 
+            (click)="cancelModify()"
+            pTooltip="Cancel Modification"
+            tooltipPosition="left">
+          </button>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-8">
+
+          
+          <div *ngIf="requestType !== 'modify'" class="mb-6">
+            <p class="text-gray-600 mb-4">
+              Fill out the form below to request a new API to be added to the platform. We'll review your request and get back to you as soon as possible.
+            </p>
+          </div>
+          
+          <!-- 3-Tab interface for API request -->
+          <p-tabView [activeIndex]="requestType === 'modify' ? 1 : 0">
+            <!-- Tab 1: Basic Information -->
+            <p-tabPanel header="Basic Information">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="field">
+                  <label for="name" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['name'], 'text-gray-700': !fieldErrors['name']}">Full Name *</label>
+                  <input 
+                    id="name" 
+                    type="text" 
+                    pInputText 
+                    [(ngModel)]="requestForm.name" 
+                    [disabled]="requestInProgress"
+                    class="w-full" 
+                    [ngClass]="{'ng-invalid ng-dirty border-red-500': fieldErrors['name']}"
+                    placeholder="Enter your full name">
+                  <small *ngIf="fieldErrors['name']" class="text-red-600">This field is required</small>
+                </div>
+                
+                <div class="field">
+                  <label for="email" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['email'], 'text-gray-700': !fieldErrors['email']}">Email Address *</label>
+                  <input 
+                    id="email" 
+                    type="email" 
+                    pInputText 
+                    [(ngModel)]="requestForm.email" 
+                    [disabled]="requestInProgress"
+                    class="w-full" 
+                    [ngClass]="{'ng-invalid ng-dirty border-red-500': fieldErrors['email']}"
+                    placeholder="Enter your email address">
+                  <small *ngIf="fieldErrors['email']" class="text-red-600">This field is required</small>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="field">
+                  <label for="structure" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['structure'], 'text-gray-700': !fieldErrors['structure']}">Structure *</label>
+                  <p-dropdown 
+                    id="structure" 
+                    [options]="structures" 
+                    [(ngModel)]="requestForm.structure" 
+                    placeholder="Select your organization" 
+                    [filter]="true" 
+                    filterBy="label"
+                    [showClear]="true"
+                    [disabled]="requestInProgress"
+                    styleClass="w-full"
+                    [ngClass]="{'ng-invalid ng-dirty': fieldErrors['structure']}">
+                  </p-dropdown>
+                  <small *ngIf="fieldErrors['structure']" class="text-red-600">This field is required</small>
+                </div>
+                
+                <div class="field">
+                  <label for="secteur" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['secteur'], 'text-gray-700': !fieldErrors['secteur']}">Sector *</label>
+                  <p-dropdown 
+                    id="secteur" 
+                    [options]="sectors" 
+                    [(ngModel)]="requestForm.secteur" 
+                    placeholder="Select your sector" 
+                    [filter]="true" 
+                    filterBy="label"
+                    [showClear]="true"
+                    [disabled]="requestInProgress"
+                    styleClass="w-full"
+                    [ngClass]="{'ng-invalid ng-dirty': fieldErrors['secteur']}">
+                  </p-dropdown>
+                  <small *ngIf="fieldErrors['secteur']" class="text-red-600">This field is required</small>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 gap-6 mb-6">
+                <div class="field">
+                  <label for="service" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['service'], 'text-gray-700': !fieldErrors['service']}">Service *</label>
+                  <p-dropdown 
+                    id="service" 
+                    [options]="services" 
+                    [(ngModel)]="requestForm.service" 
+                    placeholder="Select a service" 
+                    [filter]="true" 
+                    filterBy="label"
+                    [showClear]="true"
+                    [disabled]="requestInProgress"
+                    styleClass="w-full"
+                    [ngClass]="{'ng-invalid ng-dirty': fieldErrors['service']}">
+                  </p-dropdown>
+                  <small *ngIf="fieldErrors['service']" class="text-red-600">This field is required</small>
+                </div>
+              </div>
+            </p-tabPanel>
+            
+            <!-- Tab 2: API Details -->
+            <p-tabPanel header="API Details">
+              <div class="field mb-6">
+                <label for="apiName" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['apiName'], 'text-gray-700': !fieldErrors['apiName']}">API Name *</label>
+                <input 
+                  id="apiName" 
+                  type="text" 
+                  pInputText 
+                  [(ngModel)]="requestForm.apiName" 
+                  [disabled]="requestInProgress"
+                  class="w-full" 
+                  [ngClass]="{'ng-invalid ng-dirty border-red-500': fieldErrors['apiName']}"
+                  placeholder="Enter the name for your API">
+                <small *ngIf="fieldErrors['apiName']" class="text-red-600">This field is required</small>
+              </div>
+              
+              <div class="field mb-6">
+                <label for="apiVersion" class="block text-sm font-medium text-gray-700 mb-1">API Version</label>
+                <input 
+                  id="apiVersion" 
+                  type="text" 
+                  pInputText 
+                  [(ngModel)]="requestForm.apiVersion" 
+                  [disabled]="requestInProgress"
+                  class="w-full" 
+                  placeholder="v1">
+              </div>
+              
+              <div class="field mb-6">
+                <label for="baseUrl" class="block text-sm font-medium text-gray-700 mb-1">Base URL</label>
+                <input 
+                  id="baseUrl" 
+                  type="text" 
+                  pInputText 
+                  [(ngModel)]="requestForm.baseUrl" 
+                  [disabled]="requestInProgress"
+                  class="w-full" 
+                  placeholder="https://api.example.com">
+              </div>
+
+              <!-- Endpoints Section -->
+              <div class="field mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">API Endpoints</label>
+                <div class="border border-gray-200 rounded-md p-4 bg-gray-50">
+                  
+                  <!-- Endpoints list -->
+                  <div *ngFor="let endpoint of endpoints; let i = index" class="mb-5 pb-5 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0">
+                    <div class="flex justify-between items-start mb-3">
+                      <h4 class="text-sm font-medium text-gray-900">Endpoint {{i+1}}</h4>
+                      <button 
+                        type="button" 
+                        class="text-red-500 hover:text-red-700 focus:outline-none"
+                        (click)="removeEndpoint(i)">
+                        <i class="pi pi-trash text-sm"></i>
+                      </button>
+                    </div>
+                    
+                    <!-- Basic endpoint info -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div class="field">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Method</label>
+                        <p-dropdown 
+                          [options]="httpMethods" 
+                          [(ngModel)]="endpoints[i].method" 
+                          [disabled]="requestInProgress"
+                          styleClass="w-full">
+                        </p-dropdown>
+                      </div>
+                      
+                      <div class="field col-span-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Path</label>
+                        <input 
+                          type="text" 
+                          pInputText 
+                          [(ngModel)]="endpoints[i].path" 
+                          [disabled]="requestInProgress"
+                          class="w-full" 
+                          placeholder="/api/v1/resource">
+                      </div>
+                    </div>
+                    
+                    <div class="field mb-4">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                      <input 
+                        type="text" 
+                        pInputText 
+                        [(ngModel)]="endpoints[i].description" 
+                        [disabled]="requestInProgress"
+                        class="w-full" 
+                        placeholder="Describe what this endpoint does">
+                    </div>
+                    
+                    <!-- Parameters -->
+                    <div class="field mb-4">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Parameters</label>
+                      <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead class="bg-gray-50">
+                            <tr>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Type</th>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Description</th>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Required</th>
+                              <th class="px-3 py-2 text-xs font-medium text-gray-500">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-200">
+                            <tr *ngFor="let param of endpoints[i].parameters; let j = index">
+                              <td class="px-3 py-2">
+                                <input 
+                                  type="text" 
+                                  pInputText 
+                                  [(ngModel)]="endpoints[i].parameters[j].name" 
+                                  [disabled]="requestInProgress"
+                                  class="w-full text-xs" 
+                                  placeholder="Parameter name">
+                              </td>
+                              <td class="px-3 py-2">
+                                <input 
+                                  type="text" 
+                                  pInputText 
+                                  [(ngModel)]="endpoints[i].parameters[j].type" 
+                                  [disabled]="requestInProgress"
+                                  class="w-full text-xs" 
+                                  placeholder="string, number, etc.">
+                              </td>
+                              <td class="px-3 py-2">
+                                <input 
+                                  type="text" 
+                                  pInputText 
+                                  [(ngModel)]="endpoints[i].parameters[j].description" 
+                                  [disabled]="requestInProgress"
+                                  class="w-full text-xs" 
+                                  placeholder="Parameter description">
+                              </td>
+                              <td class="px-3 py-2 text-center">
+                                <p-checkbox 
+                                  [(ngModel)]="endpoints[i].parameters[j].required" 
+                                  [binary]="true"
+                                  [disabled]="requestInProgress">
+                                </p-checkbox>
+                              </td>
+                              <td class="px-3 py-2 text-center">
+                                <button 
+                                  type="button" 
+                                  class="text-red-500 hover:text-red-700 focus:outline-none"
+                                  (click)="removeParameter(i, j)">
+                                  <i class="pi pi-times text-xs"></i>
+                                </button>
+                              </td>
+                            </tr>
+                            <!-- Empty state -->
+                            <tr *ngIf="!endpoints[i].parameters || endpoints[i].parameters.length === 0">
+                              <td colspan="5" class="px-3 py-4 text-center text-gray-500 italic">No parameters defined</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="mt-2 text-right">
+                        <button 
+                          pButton 
+                          type="button" 
+                          icon="pi pi-plus" 
+                          label="Add Parameter" 
+                          class="p-button-outlined p-button-sm"
+                          [disabled]="requestInProgress"
+                          (click)="addParameter(i)"></button>
+                      </div>
+                    </div>
+                    
+                    <!-- Response Codes -->
+                    <div class="field mb-4">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Response Codes</label>
+                      <div class="bg-white rounded border border-gray-200 overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead class="bg-gray-50">
+                            <tr>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Status Code</th>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Description</th>
+                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Resource</th>
+                              <th class="px-3 py-2 text-xs font-medium text-gray-500">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-200">
+                            <tr *ngFor="let response of endpoints[i].responses; let j = index">
+                              <td class="px-3 py-2">
+                                <input 
+                                  type="text" 
+                                  pInputText 
+                                  [(ngModel)]="endpoints[i].responses[j].statusCode" 
+                                  [disabled]="requestInProgress"
+                                  class="w-full text-xs" 
+                                  placeholder="200, 404, etc.">
+                              </td>
+                              <td class="px-3 py-2">
+                                <input 
+                                  type="text" 
+                                  pInputText 
+                                  [(ngModel)]="endpoints[i].responses[j].description" 
+                                  [disabled]="requestInProgress"
+                                  class="w-full text-xs" 
+                                  placeholder="Success, Not Found, etc.">
+                              </td>
+                              <td class="px-3 py-2">
+                                <input 
+                                  type="text" 
+                                  pInputText 
+                                  [(ngModel)]="endpoints[i].responses[j].resource" 
+                                  [disabled]="requestInProgress"
+                                  class="w-full text-xs" 
+                                  placeholder="Resource returned">
+                              </td>
+                              <td class="px-3 py-2 text-center">
+                                <button 
+                                  type="button" 
+                                  class="text-red-500 hover:text-red-700 focus:outline-none"
+                                  (click)="removeResponse(i, j)">
+                                  <i class="pi pi-times text-xs"></i>
+                                </button>
+                              </td>
+                            </tr>
+                            <!-- Empty state -->
+                            <tr *ngIf="!endpoints[i].responses || endpoints[i].responses.length === 0">
+                              <td colspan="4" class="px-3 py-4 text-center text-gray-500 italic">No response codes defined</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="mt-2 text-right">
+                        <button 
+                          pButton 
+                          type="button" 
+                          icon="pi pi-plus" 
+                          label="Add Response" 
+                          class="p-button-outlined p-button-sm"
+                          [disabled]="requestInProgress"
+                          (click)="addResponse(i)"></button>
+                      </div>
+                    </div>
+                    
+                    <!-- Authentication -->
+                    <div class="field mb-4">
+                      <div class="flex items-center">
+                        <p-checkbox 
+                          [(ngModel)]="endpoints[i].requiresAuth" 
+                          [binary]="true"
+                          [disabled]="requestInProgress">
+                        </p-checkbox>
+                        <label class="ml-2 text-xs font-medium text-gray-700">Requires Authentication</label>
+                      </div>
+                      
+                      <div *ngIf="endpoints[i].requiresAuth" class="mt-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Authentication Method</label>
+                        <p-dropdown 
+                          [options]="authMethods" 
+                          [(ngModel)]="selectedAuthMethod" 
+                          [disabled]="requestInProgress"
+                          styleClass="w-full"
+                          (onChange)="updateAuthMethods(i, $event.value)">
+                        </p-dropdown>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Add endpoint button -->
+                  <div class="text-center mt-4" *ngIf="!requestInProgress">
+                    <button 
+                      pButton 
+                      type="button" 
+                      icon="pi pi-plus" 
+                      label="Add Endpoint" 
+                      class="p-button-outlined"
+                      (click)="addEndpoint()"></button>
+                  </div>
+                  
+                  <!-- No endpoints message -->
+                  <div *ngIf="endpoints.length === 0" class="text-center py-4 text-gray-500 italic">
+                    No endpoints defined. Click the button above to add your first endpoint.
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Input Examples Section -->              
+              <div class="field mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Input Examples</label>
+                <div class="border border-gray-200 rounded-md p-4 bg-gray-50">
+                  <div *ngFor="let input of inputExamples; let i = index" class="mb-3 pb-3 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0">
+                    <div class="flex justify-between items-start mb-2">
+                      <label class="text-sm font-medium text-gray-600">Example {{i+1}}</label>
+                      <button 
+                        type="button" 
+                        class="text-red-500 hover:text-red-700 focus:outline-none"
+                        (click)="removeInputExample(i)">
+                        <i class="pi pi-trash text-sm"></i>
+                      </button>
+                    </div>
+                    <textarea 
+                      pInputTextarea 
+                      [(ngModel)]="inputExamples[i]" 
+                      [disabled]="requestInProgress"
+                      rows="3" 
+                      class="w-full font-mono text-sm mb-2" 
+                      placeholder="Example request format or parameters"></textarea>
+                  </div>
+                  
+                  <!-- Template selector and Add button -->
+                  <div class="flex flex-col md:flex-row justify-center items-center gap-3 mt-2" *ngIf="!requestInProgress">
+                    <div class="w-full md:w-2/3 mb-2 md:mb-0">
+                      <p-dropdown 
+                        [options]="inputTemplates" 
+                        [(ngModel)]="selectedInputTemplate" 
+                        (onChange)="applyInputTemplate($event)"
+                        placeholder="Select a template..."
+                        styleClass="w-full">
+                      </p-dropdown>
+                      <small class="text-xs text-blue-600 block mt-1">↑ Choose a template or add an empty example ↓</small>
+                    </div>
+                    <button 
+                      pButton 
+                      type="button" 
+                      icon="pi pi-plus" 
+                      label="Add Empty Example" 
+                      class="p-button-outlined p-button-sm w-full md:w-auto"
+                      (click)="addInputExample()"></button>
+                  </div>
+                  
+                  <!-- No examples message -->
+                  <div *ngIf="inputExamples.length === 0" class="text-center py-4 text-gray-500 italic">
+                    No input examples added. Choose a template or add an empty example above.
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Output Examples Section -->              
+              <div class="field mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Output Examples</label>
+                <div class="border border-gray-200 rounded-md p-4 bg-gray-50">
+                  <div *ngFor="let output of outputExamples; let i = index" class="mb-3 pb-3 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0">
+                    <div class="flex justify-between items-start mb-2">
+                      <label class="text-sm font-medium text-gray-600">Example {{i+1}}</label>
+                      <button 
+                        type="button" 
+                        class="text-red-500 hover:text-red-700 focus:outline-none"
+                        (click)="removeOutputExample(i)">
+                        <i class="pi pi-trash text-sm"></i>
+                      </button>
+                    </div>
+                    <textarea 
+                      pInputTextarea 
+                      [(ngModel)]="outputExamples[i]" 
+                      [disabled]="requestInProgress"
+                      rows="3" 
+                      class="w-full font-mono text-sm mb-2" 
+                      placeholder="Example response format"></textarea>
+                  </div>
+                  
+                  <!-- Template selector and Add button -->
+                  <div class="flex flex-col md:flex-row justify-center items-center gap-3 mt-2" *ngIf="!requestInProgress">
+                    <div class="w-full md:w-2/3 mb-2 md:mb-0">
+                      <p-dropdown 
+                        [options]="outputTemplates" 
+                        [(ngModel)]="selectedOutputTemplate" 
+                        (onChange)="applyOutputTemplate($event)"
+                        placeholder="Select a template..."
+                        styleClass="w-full">
+                      </p-dropdown>
+                      <small class="text-xs text-blue-600 block mt-1">↑ Choose a template or add an empty example ↓</small>
+                    </div>
+                    <button 
+                      pButton 
+                      type="button" 
+                      icon="pi pi-plus" 
+                      label="Add Empty Example" 
+                      class="p-button-outlined p-button-sm w-full md:w-auto"
+                      (click)="addOutputExample()"></button>
+                  </div>
+                  
+                  <!-- No examples message -->
+                  <div *ngIf="outputExamples.length === 0" class="text-center py-4 text-gray-500 italic">
+                    No output examples added. Choose a template or add an empty example above.
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
+            
+            <!-- Tab 3: Additional Information -->
+            <p-tabPanel header="Additional Information">
+              <div class="field mb-6">
+                <label for="description" class="block text-sm font-medium mb-1" [ngClass]="{'text-red-600': fieldErrors['description'], 'text-gray-700': !fieldErrors['description']}">Description *</label>
+                <textarea 
+                  id="description" 
+                  pInputTextarea 
+                  [(ngModel)]="requestForm.description" 
+                  [disabled]="requestInProgress"
+                  rows="5" 
+                  class="w-full" 
+                  [ngClass]="{'ng-invalid ng-dirty border-red-500': fieldErrors['description']}"
+                  placeholder="Describe your API's purpose, functionality, and any specific requirements"></textarea>
+                <small *ngIf="fieldErrors['description']" class="text-red-600">This field is required</small>
+              </div>
+              
+              <div class="field mb-6">
+                <label for="requiresAuth" class="block text-sm font-medium text-gray-700 mb-1">Authentication Required?</label>
+                <div class="flex gap-4">
+                  <div class="flex items-center">
+                    <input type="radio" id="auth-yes" name="requiresAuth" [value]="true" [(ngModel)]="requestForm.requiresAuth" [disabled]="requestInProgress" class="h-4 w-4 text-blue-600 border-gray-300">
+                    <label for="auth-yes" class="ml-2 block text-sm text-gray-700">Yes</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input type="radio" id="auth-no" name="requiresAuth" [value]="false" [(ngModel)]="requestForm.requiresAuth" [disabled]="requestInProgress" class="h-4 w-4 text-blue-600 border-gray-300">
+                    <label for="auth-no" class="ml-2 block text-sm text-gray-700">No</label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="field mb-6" *ngIf="requestForm.requiresAuth">
+                <label for="authType" class="block text-sm font-medium text-gray-700 mb-1">Authentication Method</label>
+                <p-dropdown 
+                  id="authType" 
+                  [options]="[{label: 'OAuth2', value: 'OAuth2'}, {label: 'Bearer Token', value: 'Bearer Token'}, {label: 'API Key', value: 'API Key'}]" 
+                  [(ngModel)]="requestForm.authType" 
+                  placeholder="Select authentication method" 
+                  [disabled]="requestInProgress"
+                  styleClass="w-full">
+                </p-dropdown>
+              </div>
+              
+
+            </p-tabPanel>
+          </p-tabView>
+          
+          <div class="flex justify-end gap-3 mt-6">
+            <button 
+              pButton 
+              type="button" 
+              label="Go Back" 
+              icon="pi pi-arrow-left" 
+              class="p-button-outlined p-button-secondary"
+              [disabled]="requestInProgress"
+              (click)="displayApiRequestSection = false">
+            </button>
+            <button 
+              pButton 
+              type="button" 
+              label="Submit Request" 
+              icon="pi pi-check" 
+              class="p-button-primary"
+              [loading]="requestInProgress"
+              (click)="submitRequest()">
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
