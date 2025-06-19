@@ -26,15 +26,12 @@
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} requests"
         [showCurrentPageReport]="true">
       <ng-template pTemplate="header">
-        <tr class="bg-primary-50">
-          <th class="text-center" style="width: 3%">#</th>
-          <th style="width: 15%">Name</th>
-          <th style="width: 15%">Email</th>
-          <th style="width: 20%">Organisation</th>
-          <th style="width: 15%">Sector</th>
-          <th style="width: 10%">Status</th>
-          <th style="width: 12%">Actions</th>
-          <th style="width: 10%">Details</th>
+        <tr>
+          <th>#</th>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Actions</th>
+          <th>Details</th>
         </tr>
       </ng-template>
 
@@ -106,6 +103,14 @@
               (click)="showDetails(request)"
             ></button>
           </td>
+          <td>
+            <button pButton 
+              label="Show Request" 
+              icon="pi pi-eye" 
+              class="p-button-sm p-button-text" 
+              (click)="showDetails(request)">
+            </button>
+          </td>
         </tr>
       </ng-template>
     </p-table>
@@ -118,61 +123,25 @@
       [draggable]="false" 
       [resizable]="false" 
       [style]="{width: '500px'}"
-      [breakpoints]="{'960px': '75vw', '640px': '90vw'}"
-      styleClass="request-details-dialog"
-      contentStyleClass="p-4">
+      [breakpoints]="{'960px': '75vw', '640px': '90vw'}">
       <div *ngIf="selectedRequest" class="grid p-fluid">
-        <div class="col-12 mb-3 border-bottom-1 border-300 pb-2">
-          <h3 class="text-lg font-semibold text-primary-700 m-0">User Information</h3>
+        <div class="col-12 md:col-6">
+          <p><strong>ID:</strong> {{selectedRequest.id}}</p>
+          <p><strong>Name:</strong> {{selectedRequest.name}}</p>
+          <p><strong>Structure:</strong> {{selectedRequest.structure}}</p>
         </div>
-        
-        <div class="col-12 md:col-6 field">
-          <label class="block text-sm text-500 mb-1">ID</label>
-          <p class="text-900 font-medium">{{selectedRequest.id}}</p>
+        <div class="col-12 md:col-6">
+          <p><strong>Secteur:</strong> {{selectedRequest.secteur}}</p>
+          <p><strong>Role:</strong> {{selectedRequest.role}}</p>
+          <p><strong>Status:</strong> {{selectedRequest.status}}</p>
         </div>
-        
-        <div class="col-12 md:col-6 field">
-          <label class="block text-sm text-500 mb-1">Status</label>
-          <span class="status-badge" [ngClass]="{
-            'bg-blue-100 text-blue-900': selectedRequest.status === 'PENDING',
-            'bg-green-100 text-green-900': selectedRequest.status === 'ACCEPTED',
-            'bg-red-100 text-red-900': selectedRequest.status === 'REFUSED'
-          }">
-            {{selectedRequest.status}}
-          </span>
-        </div>
-        
-        <div class="col-12 md:col-6 field">
-          <label class="block text-sm text-500 mb-1">Name</label>
-          <p class="text-900 font-medium">{{selectedRequest.name}}</p>
-        </div>
-        
-        <div class="col-12 mb-3 mt-2 border-bottom-1 border-300 pb-2">
-          <h3 class="text-lg font-semibold text-primary-700 m-0">Organization Details</h3>
-        </div>
-        
-        <div class="col-12 md:col-6 field">
-          <label class="block text-sm text-500 mb-1">Organisation</label>
-          <p class="text-900 font-medium">{{selectedStructureName}}</p>
-        </div>
-        
-        <div class="col-12 md:col-6 field">
-          <label class="block text-sm text-500 mb-1">Secteur</label>
-          <p class="text-900 font-medium">{{selectedSecteurName}}</p>
-        </div>
-        
-        <div class="col-12 mt-2" *ngIf="selectedRequest.message">
-          <div class="mb-3 border-bottom-1 border-300 pb-2">
-            <h3 class="text-lg font-semibold text-primary-700 m-0">Additional Message</h3>
-          </div>
-          <div class="p-3 border-round bg-gray-50 text-900 message-box">{{selectedRequest.message}}</div>
+        <div class="col-12" *ngIf="selectedRequest.message">
+          <p><strong>Message:</strong></p>
+          <p class="p-3 border-round surface-100">{{selectedRequest.message}}</p>
         </div>
       </div>
       <ng-template pTemplate="footer">
-        <div class="flex justify-content-end">
-          <button pButton type="button" label="Close" icon="pi pi-times" class="p-button-outlined" (click)="displayDetailsDialog=false"></button>
-        </div>
+        <button pButton type="button" label="Close" icon="pi pi-times" (click)="displayDetailsDialog=false"></button>
       </ng-template>
     </p-dialog>
   </div>
-</div>

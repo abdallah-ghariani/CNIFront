@@ -4,7 +4,7 @@ import { AdherationService } from '../../services/adheration.service';
 import { UserService } from '../../services/user.service';
 import { StructureService } from '../../services/structure.service';
 import { SecteurService } from '../../services/secteur.service';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -37,22 +37,13 @@ export class AdherationRequestListComponent {
   requests = signal<Adheration[]>([]);
   selectedRequest: Adheration | null = null;
   displayDetailsDialog = false;
-  
-  // Maps to store name lookups
-  structureMap = new Map<string, string>();
-  secteurMap = new Map<string, string>();
-  
-  // For displaying in the UI
-  selectedStructureName = '';
-  selectedSecteurName = '';
 
   constructor(
     private adherationService: AdherationService,
     private userService: UserService,
     private structureService: StructureService,
     private secteurService: SecteurService,
-    private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private confirmationService: ConfirmationService
   ) {
     this.loadRequests();
   }
@@ -156,6 +147,11 @@ export class AdherationRequestListComponent {
   
   getSecteurName(secteurId: string): string {
     return this.secteurMap.get(secteurId) || secteurId;
+  }
+
+  showDetails(request: Adheration) {
+    this.selectedRequest = request;
+    this.displayDetailsDialog = true;
   }
 
   accept(id: string) {
